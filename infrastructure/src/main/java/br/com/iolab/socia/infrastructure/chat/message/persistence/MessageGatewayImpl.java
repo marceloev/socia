@@ -4,11 +4,11 @@ import br.com.iolab.commons.infrastructure.persistence.BasicModelGateway;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageID;
-import br.com.sagessetec.infrastructure.jooq.generated.tables.records.MessagesRecord;
+import br.com.iolab.infrastructure.jooq.generated.tables.records.MessagesRecord;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
-import static br.com.sagessetec.infrastructure.jooq.generated.tables.Messages.MESSAGES;
+import static br.com.iolab.infrastructure.jooq.generated.tables.Messages.MESSAGES;
 
 @Repository
 public class MessageGatewayImpl extends BasicModelGateway<Message, MessageID, MessagesRecord> implements MessageGateway {

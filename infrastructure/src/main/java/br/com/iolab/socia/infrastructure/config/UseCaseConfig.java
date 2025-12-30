@@ -1,7 +1,7 @@
 package br.com.iolab.socia.infrastructure.config;
 
-import br.com.sagessetec.commons.application.registry.UseCaseRegistry;
-import br.com.sagessetec.commons.application.transactional.TransactionalExecutor;
+import br.com.iolab.commons.application.registry.UseCaseRegistry;
+import br.com.iolab.commons.application.transactional.TransactionalExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

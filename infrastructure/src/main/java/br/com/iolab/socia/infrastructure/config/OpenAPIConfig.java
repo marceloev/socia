@@ -1,6 +1,6 @@
 package br.com.iolab.socia.infrastructure.config;
 
-import br.com.sagessetec.commons.infrastructure.config.BasicOpenAPIConfig;
+import br.com.iolab.commons.infrastructure.config.BasicOpenAPIConfig;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;

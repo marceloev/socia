@@ -7,7 +7,7 @@ import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageID;
 import br.com.iolab.socia.domain.chat.message.types.MessageRoleType;
 import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
-import br.com.sagessetec.infrastructure.jooq.generated.tables.records.MessagesRecord;
+import br.com.iolab.infrastructure.jooq.generated.tables.records.MessagesRecord;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package br.com.iolab.socia.infrastructure.config;
 
-import br.com.sagessetec.commons.application.transactional.TransactionalExecutor;
-import br.com.sagessetec.commons.infrastructure.config.BasicTransactionalExecutorConfig;
+import br.com.iolab.commons.application.transactional.TransactionalExecutor;
+import br.com.iolab.commons.infrastructure.config.BasicTransactionalExecutorConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;

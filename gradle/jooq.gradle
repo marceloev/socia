@@ -52,7 +52,7 @@ jooq {
                         }
                     }
                     target {
-                        packageName = 'br.com.sagessetec.infrastructure.jooq.generated'
+                        packageName = 'br.com.iolab.infrastructure.jooq.generated'
                         directory = 'build/generated-sources/jooq'
                     }
                 }

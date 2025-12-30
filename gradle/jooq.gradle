@@ -1,0 +1,62 @@
+// 1. Não precisa de buildscript com Testcontainers para DDLDatabase
+dependencies {
+    def jooqVer = dependencyManagement.importedProperties['jooq.version']
+
+    jooqGenerator "org.jooq:jooq-codegen:${jooqVer}"
+    jooqGenerator "org.jooq:jooq-meta-extensions:${jooqVer}"
+    jooqGenerator "org.jooq:jooq-meta:${jooqVer}"
+    jooqGenerator "org.jooq:jooq:${jooqVer}"
+
+    jooqGenerator 'com.h2database:h2:2.2.224'
+    jooqGenerator 'org.postgresql:postgresql'
+}
+
+jooq {
+    version = dependencyManagement.importedProperties['jooq.version']
+    configurations {
+        main {
+            generationTool {
+                logging = 'INFO'
+                generator {
+                    name = 'org.jooq.codegen.DefaultGenerator'
+                    database {
+                        // DDLDatabase com dialeto PostgreSQL
+                        name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
+                        forcedTypes {
+                            forcedType {
+                                userType = 'java.time.Instant'
+                                includeTypes = 'TIMESTAMP\\ WITH\\ TIME\\ ZONE'
+                            }
+                        }
+                        properties {
+                            property {
+                                key = 'scripts'
+                                value = "${projectDir}/src/main/resources/db/migration".replace('\\', '/')
+                            }
+                            property {
+                                key = 'sort'
+                                value = 'semantic'
+                            }
+                            property {
+                                key = 'unnamedSchema'
+                                value = 'public'
+                            }
+                            property {
+                                key = 'defaultNameCase'
+                                value = 'lower'
+                            }
+                            property {
+                                key = 'defaultSQLDialect'
+                                value = 'POSTGRES'
+                            }
+                        }
+                    }
+                    target {
+                        packageName = 'br.com.sagessetec.infrastructure.jooq.generated'
+                        directory = 'build/generated-sources/jooq'
+                    }
+                }
+            }
+        }
+    }
+}

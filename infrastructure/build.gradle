@@ -1,0 +1,64 @@
+import static org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+
+plugins {
+    id 'java'
+    id 'nu.studer.jooq' version '9.0'
+    id 'org.springframework.boot' version '3.5.8'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+    set('jooqVersion', "3.19.1")
+}
+
+dependencies {
+    implementation(project(":application"))
+    implementation platform(BOM_COORDINATES)
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}")
+
+    implementation 'br.com.iolab:commons-sql:+'
+    implementation 'br.com.iolab:commons-http-spring:+'
+    implementation 'br.com.iolab:commons-infrastructure:+'
+
+    // Springboot dependencies
+    implementation 'org.springframework.boot:spring-boot'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+
+    // Database
+    implementation 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core:10.21.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:10.21.0'
+
+    // JOOQ
+    implementation "org.jooq:jooq:${jooqVersion}"
+
+    // OpenAPI/Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.2'
+
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    // Dependências de teste
+    testImplementation platform(BOM_COORDINATES)
+    testImplementation platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}")
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+apply from: rootProject.file('gradle/jooq.gradle')
+
+test {
+    useJUnitPlatform()
+}

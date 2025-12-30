@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api 'br.com.iolab:commons-domain:+'
+    api 'br.com.iolab:commons-types:+'
+}

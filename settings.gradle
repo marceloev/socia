@@ -1,0 +1,4 @@
+rootProject.name = 'socia'
+include 'domain'
+include 'application'
+include 'infrastructure'

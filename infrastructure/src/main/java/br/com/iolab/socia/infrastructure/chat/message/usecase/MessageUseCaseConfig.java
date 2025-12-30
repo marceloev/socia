@@ -2,6 +2,8 @@ package br.com.iolab.socia.infrastructure.chat.message.usecase;
 
 import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCase;
 import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCaseImpl;
+import br.com.iolab.socia.application.chat.message.list.ListMessagesByChatUseCase;
+import br.com.iolab.socia.application.chat.message.list.ListMessagesByChatUseCaseImpl;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
@@ -31,6 +33,13 @@ public class MessageUseCaseConfig {
                 organizationGateway,
                 assistantGateway,
                 chatGateway,
+                messageGateway
+        );
+    }
+
+    @Bean
+    protected ListMessagesByChatUseCase listMessagesByChatUseCase () {
+        return new ListMessagesByChatUseCaseImpl(
                 messageGateway
         );
     }

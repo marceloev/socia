@@ -1,12 +1,16 @@
 package br.com.iolab.socia.infrastructure.chat.message.persistence;
 
 import br.com.iolab.commons.infrastructure.persistence.BasicModelGateway;
+import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageID;
 import br.com.iolab.infrastructure.jooq.generated.tables.records.MessagesRecord;
+import lombok.NonNull;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static br.com.iolab.infrastructure.jooq.generated.tables.Messages.MESSAGES;
 
@@ -25,5 +29,15 @@ public class MessageGatewayImpl extends BasicModelGateway<Message, MessageID, Me
                 MESSAGES.ID,
                 MESSAGES.UPDATED_AT
         );
+    }
+
+    @Override
+    public List<Message> findAllByChatID (@NonNull final ChatID chatID) {
+        return this.readOnlyDSLContext
+                .selectFrom(MESSAGES)
+                .where(MESSAGES.CHAT_ID.eq(chatID.value()))
+                .orderBy(MESSAGES.CREATED_AT.asc())
+                .fetch()
+                .map(this.mapper::toModel);
     }
 }

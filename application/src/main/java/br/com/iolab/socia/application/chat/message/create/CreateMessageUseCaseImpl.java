@@ -54,8 +54,8 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
                     createOrganization.getId(),
                     input.to(),
                     AssistantProviderType.GEMINI,
-                    null,
-                    null
+                    "gemini.3-0",
+                    "Feliz"
             ).successOrThrow();
             this.create(this.assistantGateway, createAssistant);
 

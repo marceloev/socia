@@ -1,7 +1,7 @@
 package br.com.iolab.socia.infrastructure.config;
 
-import br.com.sagessetec.commons.infrastructure.config.BasicWebServerConfig;
-import br.com.sagessetec.commons.json.Json;
+import br.com.iolab.commons.infrastructure.config.BasicWebServerConfig;
+import br.com.iolab.commons.json.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

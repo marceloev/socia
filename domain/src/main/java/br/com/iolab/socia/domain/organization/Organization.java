@@ -52,7 +52,7 @@ public class Organization extends Model<OrganizationID> {
                 now,
                 name,
                 taxID,
-                ACTIVE
+                PROSPECT
         ).validate();
     }
 

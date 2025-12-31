@@ -1,9 +1,10 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy;
 
 import br.com.iolab.socia.domain.assistant.Assistant;
+import br.com.iolab.socia.domain.chat.Chat;
+import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
-import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
 import br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.GeminiMessageStrategy;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +22,11 @@ public class DefaultMessageStrategy implements MessageStrategy {
     @Override
     public @NonNull Message perform (
             @NonNull final Assistant assistant,
-            @NonNull final Message message,
-            @NonNull final Iterable<MessageResource> resources
+            @NonNull final Chat chat
     ) {
         log.debug("Performing message strategy...");
         return switch (assistant.getProvider()) {
-            case GEMINI -> this.geminiMessageStrategy.perform(assistant, message, resources);
+            case GEMINI -> this.geminiMessageStrategy.perform(assistant, chat);
         };
     }
 }

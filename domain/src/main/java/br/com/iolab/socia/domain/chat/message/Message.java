@@ -13,10 +13,11 @@ import lombok.NonNull;
 import lombok.ToString;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.Objects;
 
 import static br.com.iolab.commons.domain.utils.InstantUtils.now;
 import static br.com.iolab.commons.types.Checks.checkNonNull;
-import static br.com.iolab.commons.types.Checks.checkNotBlank;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.FAILED;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.PROCESSED;
 
@@ -27,6 +28,7 @@ public class Message extends Model<MessageID> {
     private final MessageStatusType status;
     private final MessageRoleType role;
     private final MessageContent content;
+    private final Map<String, String> metadata;
     private final Instant nextCheckTime;
 
     @Builder(toBuilder = true, access = AccessLevel.PRIVATE)
@@ -38,6 +40,7 @@ public class Message extends Model<MessageID> {
             final MessageStatusType status,
             final MessageRoleType role,
             final MessageContent content,
+            final Map<String, String> metadata,
             final Instant nextCheckTime
     ) {
         super(id, createdAt, updatedAt);
@@ -45,6 +48,7 @@ public class Message extends Model<MessageID> {
         this.status = checkNonNull(status, "Status não pode ser nulo!");
         this.role = checkNonNull(role, "Role não pode ser nulo!");
         this.content = checkNonNull(content, "Content não pode ser vazio!");
+        this.metadata = checkNonNull(metadata, "Metadata não pode ser nulo!");
         this.nextCheckTime = checkNonNull(nextCheckTime, "Tempo de checagem não pode ser vazio!");
     }
 
@@ -52,7 +56,8 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final MessageContent content
+            final MessageContent content,
+            final Map<String, String> metadata
     ) {
         var now = now();
         return new Message(
@@ -63,6 +68,7 @@ public class Message extends Model<MessageID> {
                 status,
                 role,
                 content,
+                metadata,
                 now
         ).validate();
     }
@@ -75,6 +81,7 @@ public class Message extends Model<MessageID> {
             final MessageStatusType status,
             final MessageRoleType role,
             final MessageContent content,
+            final Map<String, String> metadata,
             final Instant nextCheckTime
     ) {
         return new Message(
@@ -85,6 +92,7 @@ public class Message extends Model<MessageID> {
                 status,
                 role,
                 content,
+                metadata,
                 nextCheckTime
         );
     }

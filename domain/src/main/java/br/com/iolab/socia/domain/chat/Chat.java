@@ -17,7 +17,6 @@ import java.time.Instant;
 
 import static br.com.iolab.commons.domain.utils.InstantUtils.now;
 import static br.com.iolab.commons.types.Checks.checkNonNull;
-import static br.com.iolab.socia.domain.chat.types.ChatStatusType.ACTIVE;
 import static br.com.iolab.socia.domain.chat.types.ChatStatusType.CREATED;
 
 @Getter
@@ -59,7 +58,8 @@ public class Chat extends Model<ChatID> {
             final AssistantID assistantID,
             final UserID userID,
             final Phone to,
-            final Phone from
+            final Phone from,
+            final Long count
     ) {
         var now = now();
         return new Chat(
@@ -72,7 +72,7 @@ public class Chat extends Model<ChatID> {
                 to,
                 from,
                 CREATED,
-                0L
+                count
         ).validate();
     }
 
@@ -106,5 +106,12 @@ public class Chat extends Model<ChatID> {
     protected Result<Chat> validate () {
         var result = Result.builder(this);
         return result.build();
+    }
+
+    public Result<Chat> incrementMessageCount () {
+        return this.toBuilder()
+                .count(getCount() + 1)
+                .build()
+                .validate();
     }
 }

@@ -56,6 +56,8 @@ public class MessageUseCaseConfig {
     protected PerformMessageUseCase performMessageUseCase () {
         return new PerformMessageUseCaseImpl(
                 messageGateway,
+                chatGateway,
+                assistantGateway,
                 messageStrategy
         );
     }
@@ -64,12 +66,13 @@ public class MessageUseCaseConfig {
     protected ProcessMessageUseCase processMessageUseCase (final PerformMessageUseCase performMessageUseCase) {
         return new ProcessMessageUseCaseImpl(
                 messageGateway,
+                assistantGateway,
                 performMessageUseCase
         );
     }
 
     @Bean
-    protected SendMessageUseCase sendMessageUseCase() {
+    protected SendMessageUseCase sendMessageUseCase () {
         return new SendMessageUseCaseImpl(
                 messageGateway
         );

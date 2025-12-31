@@ -8,6 +8,7 @@ import java.util.Map;
 
 public record Output(
         @JsonProperty(value = "message") String message,
+        @JsonProperty(value = "knowledge") String knowledge,
         @JsonProperty(value = "escalate") Escalate escalate
 ) {
     private static final Schema SCHEMA;
@@ -17,6 +18,12 @@ public record Output(
                 .setDescription("A mensagem final para o usuário. Deve ser clara, direta e sem rascunhos ou pensamentos internos.")
                 .setType(Type.STRING)
                 .setNullable(false)
+                .build();
+
+        var knowledgeSchema = Schema.newBuilder()
+                .setDescription("Dados de conhecimento, caso tenha aprendido algo do usuário que precise ser salvo para usar posteriormente ou melhorar o conhecimento sobre os gostos/rotinas dele.")
+                .setType(Type.STRING)
+                .setNullable(true)
                 .build();
 
         var reasonSchema = Schema.newBuilder()
@@ -40,6 +47,7 @@ public record Output(
                 .setType(Type.OBJECT)
                 .putAllProperties(Map.of(
                         "message", messageSchema,
+                        "knowledge", knowledgeSchema,
                         "escalate", escalateSchema
                 ))
                 .addRequired("message")
@@ -58,6 +66,7 @@ public record Output(
                         Já reiniciei meu foco para te atender melhor. Poderia, por favor, me dizer o que precisa novamente? Às vezes, formular o pedido com outras palavras ajuda.
                         Se preferir, posso escalar para meu supervisor, mas se puder tentar novamente, estou pronto para recomeçar!
                         """,
+                null,
                 null
         );
     }

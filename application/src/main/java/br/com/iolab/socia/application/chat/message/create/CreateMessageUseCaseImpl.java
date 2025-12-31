@@ -18,6 +18,7 @@ import br.com.iolab.socia.domain.user.UserGateway;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static br.com.iolab.socia.domain.chat.message.types.MessageRoleType.USER;
@@ -54,7 +55,7 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
                     createOrganization.getId(),
                     input.to(),
                     AssistantProviderType.GEMINI,
-                    "gemini.3-0",
+                    "gemini-3-flash-preview",
                     "Feliz"
             ).successOrThrow();
             this.create(this.assistantGateway, createAssistant);
@@ -64,45 +65,52 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
                     createAssistant.getId(),
                     createUser.getId(),
                     input.to(),
-                    input.from()
+                    input.from(),
+                    1L
             ).successOrThrow();
 
             this.create(this.chatGateway, chat);
         } else {
-            chat = this.chatGateway.findByToAndFrom(input.to(), input.from())
-                    .orElseGet(() -> {
-                        var member = this.memberGateway.findAllByUserID(existingUser.get().getId());
+            var existingChat = this.chatGateway.findByToAndFrom(input.to(), input.from());
+            if (existingChat.isPresent()) {
+                chat = existingChat.get()
+                        .incrementMessageCount()
+                        .successOrThrow();
 
-                        var organizationIDs = Streams.streamOf(member)
-                                .map(Member::getOrganizationID)
-                                .collect(Collectors.toSet());
+                this.update(this.chatGateway, chat);
+            } else {
+                var member = this.memberGateway.findAllByUserID(existingUser.get().getId());
 
-                        var assistants = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).stream()
-                                .filter(it -> it.getPhone().equals(input.to()))
-                                .toList();
+                var organizationIDs = Streams.streamOf(member)
+                        .map(Member::getOrganizationID)
+                        .collect(Collectors.toSet());
 
-                        if (assistants.size() != 1) {
-                            throw BadRequestException.with("Não foi possível identificar a assistente através do número: " + input.to().value());
-                        }
+                var assistants = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).stream()
+                        .filter(it -> it.getPhone().equals(input.to()))
+                        .toList();
 
-                        var createChat = Chat.create(
-                                assistants.getFirst().getOrganizationID(),
-                                assistants.getFirst().getId(),
-                                existingUser.get().getId(),
-                                input.to(),
-                                input.from()
-                        ).successOrThrow();
-                        this.create(this.chatGateway, createChat);
+                if (assistants.size() != 1) {
+                    throw BadRequestException.with("Não foi possível identificar a assistente através do número: " + input.to().value());
+                }
 
-                        return createChat;
-                    });
+                chat = Chat.create(
+                        assistants.getFirst().getOrganizationID(),
+                        assistants.getFirst().getId(),
+                        existingUser.get().getId(),
+                        input.to(),
+                        input.from(),
+                        1L
+                ).successOrThrow();
+                this.create(this.chatGateway, chat);
+            }
         }
 
         var message = Message.create(
                 chat.getId(),
                 RECEIVED,
                 USER,
-                input.content()
+                input.content(),
+                Collections.emptyMap()
         ).successOrThrow();
 
         this.create(this.messageGateway, message);

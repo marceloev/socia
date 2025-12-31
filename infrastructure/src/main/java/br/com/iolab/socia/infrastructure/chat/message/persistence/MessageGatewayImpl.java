@@ -144,7 +144,8 @@ public class MessageGatewayImpl extends BasicModelGateway<Message, MessageID, Me
         return this.readOnlyDSLContext
                 .selectFrom(MESSAGES)
                 .where(MESSAGES.CHAT_ID.eq(chatID.value()))
-                .orderBy(MESSAGES.CREATED_AT.asc())
+                .orderBy(MESSAGES.CREATED_AT.desc())
+                .limit(10_000)
                 .fetch()
                 .map(this.mapper::toModel);
     }

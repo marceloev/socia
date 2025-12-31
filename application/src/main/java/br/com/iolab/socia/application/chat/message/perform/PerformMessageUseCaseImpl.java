@@ -1,34 +1,34 @@
 package br.com.iolab.socia.application.chat.message.perform;
 
-import br.com.iolab.commons.types.fields.Phone;
-import br.com.iolab.commons.types.fields.TaxID;
+import br.com.iolab.commons.domain.utils.ExceptionUtils;
 import br.com.iolab.socia.domain.assistant.Assistant;
-import br.com.iolab.socia.domain.assistant.types.AssistantProviderType;
+import br.com.iolab.socia.domain.assistant.AssistantGateway;
+import br.com.iolab.socia.domain.chat.Chat;
+import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
-import br.com.iolab.socia.domain.organization.Organization;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
     private final MessageGateway messageGateway;
+    private final ChatGateway chatGateway;
+    private final AssistantGateway assistantGateway;
     private final MessageStrategy messageStrategy;
 
     @Override
     protected void perform (@NonNull final PerformMessageUseCase.Input input) {
-        var message = this.messageStrategy.perform(Assistant.create(
-                        Organization.create("a", TaxID.of("06345774685")).successOrThrow().getId(),
-                        Phone.of("+5534991940773"),
-                        AssistantProviderType.GEMINI,
-                        "gemini-3-flash-preview",
-                        "SEJA GENTIL"
-                ).successOrThrow(),
-                input.message(),
-                List.of()
-        );
+        var chat = this.chatGateway.findById(input.chatID())
+                .orElseThrow(ExceptionUtils.notFound(input.chatID(), Chat.class));
+
+        var assistant = this.assistantGateway.findById(chat.getAssistantID())
+                .orElseThrow(ExceptionUtils.notFound(chat.getAssistantID(), Assistant.class));
+
+        var message = this.messageStrategy.perform(assistant, chat);
         this.create(this.messageGateway, message);
+
+        var incrementedChat = chat.incrementMessageCount().successOrThrow();
+        this.update(this.chatGateway, incrementedChat);
     }
 }

@@ -38,6 +38,7 @@ spring:
 
 logging:
   level:
+    br.com.iolab.socia: DEBUG
     org.jooq.Constants: WARN
     com.google.genai: DEBUG
     com.google.auth: DEBUG

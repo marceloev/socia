@@ -1,15 +1,15 @@
 package br.com.iolab.socia.infrastructure.config;
 
 import br.com.iolab.commons.domain.exceptions.InternalErrorException;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.genai.Client;
-import com.google.genai.types.ClientOptions;
-import com.google.genai.types.HarmBlockThreshold;
-import com.google.genai.types.HarmCategory;
-import com.google.genai.types.HttpOptions;
-import com.google.genai.types.HttpRetryOptions;
-import com.google.genai.types.SafetySetting;
-import lombok.NonNull;
+import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.HarmCategory;
+import com.google.cloud.vertexai.api.PredictionServiceClient;
+import com.google.cloud.vertexai.api.PredictionServiceSettings;
+import com.google.cloud.vertexai.api.SafetySetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,8 +17,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.context.properties.bind.Name;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 
@@ -32,7 +35,7 @@ import static br.com.iolab.commons.types.Checks.checkPositive;
 public class VertexAIConfig {
     private final Properties properties;
 
-    @Bean(destroyMethod = "close")
+    /*@Bean(destroyMethod = "close")
     public Client client (@NonNull final GoogleCredentials credentials) {
         // https://github.com/googleapis/java-genai
         log.info("Configurando GenAI Client com timeout de {} min e {} retries", properties.timeoutMinutes(), properties.maxRetryAttempts());
@@ -64,7 +67,55 @@ public class VertexAIConfig {
                 .httpOptions(httpOptions)
                 .clientOptions(clientOptions)
                 .build();
+    }*/
+    @Lazy
+    @Bean(destroyMethod = "close")
+    public VertexAI vertexAI (final PredictionServiceClient predictionServiceClient) {
+        return new VertexAI.Builder()
+                .setProjectId(properties.projectId())
+                .setLocation(properties.location())
+                .setPredictionClientSupplier(() -> predictionServiceClient)
+                .build();
     }
+
+    @Bean(destroyMethod = "close")
+    public PredictionServiceClient predictionServiceClient (final GoogleCredentials credentials) throws IOException {
+        log.info("Configurando PredictionServiceClient com timeout de {} minutos e {} tentativas de retry",
+                properties.timeoutMinutes(), properties.maxRetryAttempts());
+
+        var predictionServiceSettings = PredictionServiceSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                // Aplica configurações de retry a todos os métodos unários
+                .applyToAllUnaryMethods(unary -> {
+                    unary.setRetrySettings(RetrySettings.newBuilder()
+                            .setMaxAttempts(properties.maxRetryAttempts()) // Número máximo de tentativas (configurável)
+                            .setRetryDelayMultiplier(2.0) // Multiplicador exponencial do atraso (backoff exponencial)
+                            .setMaxRetryDelayDuration(Duration.ofSeconds(properties.maxRetryDelaySeconds())) // Atraso máximo entre tentativas
+                            .setTotalTimeoutDuration(Duration.ofMinutes(properties.timeoutMinutes())) // Tempo limite total configurável
+                            .build());
+
+                    // Configura códigos de status que devem ser retentados
+                    // RESOURCE_EXHAUSTED (429) - Rate limiting
+                    // UNAVAILABLE (503) - Serviço temporariamente indisponível
+                    // DEADLINE_EXCEEDED (504) - Timeout, mas pode ser transiente
+                    unary.setRetryableCodes(
+                            StatusCode.Code.RESOURCE_EXHAUSTED,
+                            StatusCode.Code.UNAVAILABLE,
+                            StatusCode.Code.DEADLINE_EXCEEDED
+                    );
+
+                    return null;
+                })
+                .build();
+
+        log.info("PredictionServiceClient configurado com sucesso. Retry: backoff exponencial de {}ms até {}s",
+                properties.maxRetryDelaySeconds(),
+                properties.timeoutMinutes()
+        );
+
+        return PredictionServiceClient.create(predictionServiceSettings);
+    }
+
 
     /**
      * Configurações de Safety Settings otimizadas para evitar bloqueios desnecessários.
@@ -75,21 +126,21 @@ public class VertexAIConfig {
         log.info("Configurando Safety Settings otimizados para Gemini");
 
         return List.of(
-                SafetySetting.builder()
-                        .category(HarmCategory.Known.HARM_CATEGORY_HATE_SPEECH)
-                        .threshold(HarmBlockThreshold.Known.BLOCK_ONLY_HIGH)
+                SafetySetting.newBuilder()
+                        .setCategory(HarmCategory.HARM_CATEGORY_HATE_SPEECH)
+                        .setThreshold(SafetySetting.HarmBlockThreshold.BLOCK_ONLY_HIGH)
                         .build(),
-                SafetySetting.builder()
-                        .category(HarmCategory.Known.HARM_CATEGORY_DANGEROUS_CONTENT)
-                        .threshold(HarmBlockThreshold.Known.BLOCK_ONLY_HIGH)
+                SafetySetting.newBuilder()
+                        .setCategory(HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT)
+                        .setThreshold(SafetySetting.HarmBlockThreshold.BLOCK_ONLY_HIGH)
                         .build(),
-                SafetySetting.builder()
-                        .category(HarmCategory.Known.HARM_CATEGORY_SEXUALLY_EXPLICIT)
-                        .threshold(HarmBlockThreshold.Known.BLOCK_ONLY_HIGH)
+                SafetySetting.newBuilder()
+                        .setCategory(HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT)
+                        .setThreshold(SafetySetting.HarmBlockThreshold.BLOCK_ONLY_HIGH)
                         .build(),
-                SafetySetting.builder()
-                        .category(HarmCategory.Known.HARM_CATEGORY_HARASSMENT)
-                        .threshold(HarmBlockThreshold.Known.BLOCK_ONLY_HIGH)
+                SafetySetting.newBuilder()
+                        .setCategory(HarmCategory.HARM_CATEGORY_HARASSMENT)
+                        .setThreshold(SafetySetting.HarmBlockThreshold.BLOCK_ONLY_HIGH)
                         .build()
         );
     }

@@ -1,4 +1,4 @@
-package br.com.iolab.socia.infrastructure.chat.message.strategy;
+package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini;
 
 import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.chat.message.Message;

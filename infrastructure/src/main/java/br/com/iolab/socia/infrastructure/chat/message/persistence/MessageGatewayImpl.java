@@ -9,13 +9,14 @@ import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageID;
 import br.com.iolab.socia.domain.chat.message.MessageSearchQuery;
 import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
+import br.com.iolab.socia.domain.chat.message.valueobject.ReservationPolicy;
 import lombok.NonNull;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static br.com.iolab.infrastructure.jooq.generated.tables.Messages.MESSAGES;
@@ -40,42 +41,100 @@ public class MessageGatewayImpl extends BasicModelGateway<Message, MessageID, Me
     }
 
     @Override
-    public List<Message> reserve (
-            @NonNull final Integer size,
-            @NonNull final Instant now,
-            @NonNull final Instant lease
-    ) {
-        var targetChats = name("target_chats").as(
+    public List<Message> reserve (@NonNull final ReservationPolicy reservationPolicy) {
+        /*
+          WITH candidate_chats AS (
+            SELECT chat_id FROM messages
+            WHERE status = 'RECEIVED' AND next_check_time <= now
+            GROUP BY chat_id
+            ORDER BY MIN(next_check_time) ASC
+            LIMIT 20
+          ),
+          message_leaders AS (
+            SELECT chat_id, id as leader_id,
+                   ROW_NUMBER() OVER (PARTITION BY chat_id ORDER BY next_check_time ASC) as rn
+            FROM messages
+            JOIN candidate_chats USING (chat_id)
+            WHERE status = 'RECEIVED'
+          ),
+          locked_leaders AS (
+            SELECT leader_id as id, chat_id
+            FROM message_leaders
+            WHERE rn = 1
+            ORDER BY chat_id
+            LIMIT 10
+            FOR UPDATE SKIP LOCKED
+          ),
+          target_messages AS (
+            SELECT id FROM messages
+            WHERE chat_id IN (SELECT chat_id FROM locked_leaders)
+              AND status = 'RECEIVED'
+            ORDER BY chat_id, next_check_time ASC
+            LIMIT 500
+          )
+          UPDATE messages SET next_check_time = lease
+          WHERE id IN (SELECT id FROM target_messages)
+          RETURNING *;
+         */
+        // CTE 1: Seleciona os N chats com mensagens mais antigas (sem lock ainda)
+        var candidateChats = name("candidate_chats").as(
                 select(MESSAGES.CHAT_ID)
                         .from(MESSAGES)
-                        .where(MESSAGES.STATUS.equal(MessageStatusType.RECEIVED.name()))
-                        .and(MESSAGES.NEXT_CHECK_TIME.lessOrEqual(now))
+                        .where(MESSAGES.STATUS.equal(reservationPolicy.status().name()))
+                        .and(MESSAGES.NEXT_CHECK_TIME.lessOrEqual(reservationPolicy.reservedAt()))
                         .groupBy(MESSAGES.CHAT_ID)
-                        .orderBy(min(MESSAGES.NEXT_CHECK_TIME).asc())
-                        .limit(size)
+                        .orderBy(min(MESSAGES.NEXT_CHECK_TIME).asc()) // Ordena pela mensagem mais antiga do chat
+                        .limit(reservationPolicy.maxChats() * 2)
+        );
+
+        // CTE 2: Identifica o ID da mensagem "líder" de cada chat candidato
+        // Usa ROW_NUMBER para pegar a mensagem com menor next_check_time de cada chat
+        var messageLeaders = name("message_leaders").as(
+                select(
+                        MESSAGES.CHAT_ID,
+                        MESSAGES.ID.as("leader_id"),
+                        rowNumber().over()
+                                .partitionBy(MESSAGES.CHAT_ID)
+                                .orderBy(MESSAGES.NEXT_CHECK_TIME.asc())
+                                .as("rn")
+                )
+                        .from(MESSAGES)
+                        .join(candidateChats).on(MESSAGES.CHAT_ID.equal(candidateChats.field(MESSAGES.CHAT_ID)))
+                        .where(MESSAGES.STATUS.equal(reservationPolicy.status().name()))
+        );
+
+        // CTE 3: Aplica o LOCK apenas nas N mensagens líderes (1 por chat)
+        var lockedLeaders = name("locked_leaders").as(
+                select(
+                        field(name("message_leaders", "leader_id"), UUID.class).as("id"),
+                        field(name("message_leaders", "chat_id"), String.class).as("chat_id")
+                )
+                        .from(messageLeaders)
+                        .where(field(name("message_leaders", "rn"), Integer.class).equal(1))
+                        .orderBy(field(name("message_leaders", "chat_id")))
+                        .limit(reservationPolicy.maxChats() * 2)
                         .forUpdate()
                         .skipLocked()
         );
 
-        // CTE 2: As 500 Mensagens desses chats
+        // CTE 4: Busca o lote de 500 mensagens dos chats que conseguimos o lock
         var targetMessages = name("target_messages").as(
                 select(MESSAGES.ID)
                         .from(MESSAGES)
-                        .join(targetChats).on(MESSAGES.CHAT_ID.equal(targetChats.field(MESSAGES.CHAT_ID)))
-                        .where(MESSAGES.STATUS.equal(MessageStatusType.RECEIVED.name()))
+                        .where(MESSAGES.CHAT_ID.in(select(field(name("locked_leaders", "chat_id"), UUID.class)).from(lockedLeaders)))
+                        .and(MESSAGES.STATUS.equal(reservationPolicy.status().name()))
                         .orderBy(MESSAGES.CHAT_ID, MESSAGES.NEXT_CHECK_TIME.asc())
-                        .limit(500)
+                        .limit(reservationPolicy.maxMessages())
         );
 
-        // Execução do Update com Returning
-        return this.readOnlyDSLContext.with(targetChats)
+        // UPDATE Final
+        return this.writeOnlyDSLContext.with(candidateChats)
+                .with(messageLeaders)
+                .with(lockedLeaders)
                 .with(targetMessages)
                 .update(MESSAGES)
-                .set(MESSAGES.NEXT_CHECK_TIME, lease)
-                .where(MESSAGES.ID.in(
-                        select(field(name("target_messages", "id"), UUID.class))
-                                .from(targetMessages)
-                ))
+                .set(MESSAGES.NEXT_CHECK_TIME, reservationPolicy.reservedUntil())
+                .where(MESSAGES.ID.in(select(field(name("target_messages", "id"), UUID.class)).from(targetMessages)))
                 .returning()
                 .fetch()
                 .map(this.mapper::toModel);
@@ -95,7 +154,7 @@ public class MessageGatewayImpl extends BasicModelGateway<Message, MessageID, Me
     public Pagination<Message> findAll (@NonNull final MessageSearchQuery query) {
         var result = this.readOnlyDSLContext.selectFrom(table)
                 .where(nonNull(query.statuses()) ? MESSAGES.STATUS.in(query.statuses()) : DSL.noCondition())
-                .orderBy(MESSAGES.field(query.sort().name()).asc())
+                .orderBy(Objects.requireNonNull(MESSAGES.field(query.sort().name())).asc())
                 .limit(query.perPage())
                 .offset(query.page() * query.perPage())
                 .fetch();

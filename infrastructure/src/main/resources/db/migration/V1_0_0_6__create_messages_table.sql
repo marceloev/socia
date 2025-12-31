@@ -11,4 +11,6 @@ CREATE TABLE messages (
     CONSTRAINT fk_messages_chat FOREIGN KEY (chat_id) REFERENCES chats(id)
 );
 
-CREATE INDEX idx_messages_reserved ON messages(status, next_check_time);
+CREATE INDEX idx_messages_reserve_polling
+    ON messages (next_check_time ASC, chat_id)
+    WHERE status IN ('RECEIVED', 'COMPLETED', 'FAILED');

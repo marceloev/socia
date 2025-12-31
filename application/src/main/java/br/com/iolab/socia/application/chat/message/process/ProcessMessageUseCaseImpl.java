@@ -6,16 +6,18 @@ import br.com.iolab.commons.types.Streams;
 import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCase;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
+import br.com.iolab.socia.domain.chat.message.valueobject.ReservationPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static br.com.iolab.commons.domain.utils.InstantUtils.now;
-import static br.com.iolab.commons.domain.utils.InstantUtils.plusMinutes;
+import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.RECEIVED;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class ProcessMessageUseCaseImpl extends ProcessMessageUseCase {
     @Override
     protected void perform () {
         var messagesByChat = this.transactional().getTransactionalExecutor().execute(() ->
-                this.messageGateway.reserve(10, now(), plusMinutes(10))
+                this.messageGateway.reserve(ReservationPolicy.with(RECEIVED, 10, Duration.ofMinutes(5)))
         ).stream().collect(Collectors.groupingBy(Message::getChatID));
 
         if (messagesByChat.isEmpty()) {
@@ -34,32 +36,34 @@ public class ProcessMessageUseCaseImpl extends ProcessMessageUseCase {
             return;
         }
 
+        var changeBus = bus();
+
+        var completables = new ArrayList<CompletableFuture<?>>();
         messagesByChat.forEach((chatID, messages) -> {
             var lastMessage = messages.stream()
                     .max(Comparator.comparing(Message::getCreatedAt))
                     .orElseThrow(ExceptionUtils.badRequest("Não foi possível determinar a última mensagem do chat: " + chatID.value()));
 
-            CompletableFuture.runAsync(() -> this.performMessageUseCase.execute(new PerformMessageUseCase.Input(lastMessage)))
+            completables.add(CompletableFuture.runAsync(() -> this.performMessageUseCase.execute(new PerformMessageUseCase.Input(lastMessage)))
                     .thenAccept(_ -> {
-                        var processedMessages = Streams.streamOf(messages)
+                        Streams.streamOf(messages)
                                 .map(Message::markAsProcessed)
                                 .map(Result::successOrThrow)
-                                .toList();
-
-                        this.update(this.messageGateway, processedMessages);
+                                .forEach(message -> changeBus.add(this.messageGateway::update, message));
                     })
                     .orTimeout(2, TimeUnit.MINUTES)
                     .exceptionally(throwable -> {
                         log.error("Error while trying to process messages from chat: {}", chatID, throwable);
 
-                        var failedMessages = Streams.streamOf(messages)
+                        Streams.streamOf(messages)
                                 .map(Message::markAsFailed)
                                 .map(Result::successOrThrow)
-                                .toList();
+                                .forEach(message -> changeBus.add(this.messageGateway::update, message));
 
-                        this.update(this.messageGateway, failedMessages);
                         return null;
-                    });
+                    }));
         });
+
+        CompletableFuture.allOf(completables.toArray(new CompletableFuture[0])).join();
     }
 }

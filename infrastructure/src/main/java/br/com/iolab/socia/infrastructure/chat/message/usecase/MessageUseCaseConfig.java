@@ -8,6 +8,8 @@ import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCase
 import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCaseImpl;
 import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCase;
 import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCaseImpl;
+import br.com.iolab.socia.application.chat.message.send.SendMessageUseCase;
+import br.com.iolab.socia.application.chat.message.send.SendMessageUseCaseImpl;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
@@ -50,7 +52,9 @@ public class MessageUseCaseConfig {
 
     @Bean
     protected PerformMessageUseCase performMessageUseCase () {
-        return new PerformMessageUseCaseImpl();
+        return new PerformMessageUseCaseImpl(
+                messageGateway
+        );
     }
 
     @Bean
@@ -58,6 +62,13 @@ public class MessageUseCaseConfig {
         return new ProcessMessageUseCaseImpl(
                 messageGateway,
                 performMessageUseCase
+        );
+    }
+
+    @Bean
+    protected SendMessageUseCase sendMessageUseCase() {
+        return new SendMessageUseCaseImpl(
+                messageGateway
         );
     }
 }

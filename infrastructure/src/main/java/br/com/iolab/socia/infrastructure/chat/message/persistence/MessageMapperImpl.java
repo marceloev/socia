@@ -6,6 +6,7 @@ import br.com.iolab.infrastructure.jooq.generated.tables.records.MessagesRecord;
 import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageID;
+import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.domain.chat.message.types.MessageRoleType;
 import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
 import org.jspecify.annotations.NonNull;
@@ -24,7 +25,7 @@ public class MessageMapperImpl extends ModelMapper<Message, MessagesRecord> {
                 mapNullable(message.getChatID(), ModelID::value),
                 mapNullable(message.getStatus(), Enum::name),
                 mapNullable(message.getRole(), Enum::name),
-                message.getContent(),
+                mapNullable(message.getContent(), MessageContent::value),
                 message.getNextCheckTime()
         );
     }
@@ -38,7 +39,7 @@ public class MessageMapperImpl extends ModelMapper<Message, MessagesRecord> {
                 mapNullable(messagesRecord.getChatId(), ChatID::from),
                 mapNullable(messagesRecord.getStatus(), MessageStatusType::valueOf),
                 mapNullable(messagesRecord.getRole(), MessageRoleType::valueOf),
-                messagesRecord.getContent(),
+                mapNullable(messagesRecord.getContent(), MessageContent::of),
                 messagesRecord.getNextCheckTime()
         );
     }

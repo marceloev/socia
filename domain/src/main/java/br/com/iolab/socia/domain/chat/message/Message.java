@@ -3,6 +3,7 @@ package br.com.iolab.socia.domain.chat.message;
 import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.domain.validation.Result;
 import br.com.iolab.socia.domain.chat.ChatID;
+import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.domain.chat.message.types.MessageRoleType;
 import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
 import lombok.AccessLevel;
@@ -25,7 +26,7 @@ public class Message extends Model<MessageID> {
     private final ChatID chatID;
     private final MessageStatusType status;
     private final MessageRoleType role;
-    private final String content;
+    private final MessageContent content;
     private final Instant nextCheckTime;
 
     @Builder(toBuilder = true, access = AccessLevel.PRIVATE)
@@ -36,14 +37,14 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final String content,
+            final MessageContent content,
             final Instant nextCheckTime
     ) {
         super(id, createdAt, updatedAt);
         this.chatID = checkNonNull(chatID, "ChatID não pode ser nulo!");
         this.status = checkNonNull(status, "Status não pode ser nulo!");
         this.role = checkNonNull(role, "Role não pode ser nulo!");
-        this.content = checkNotBlank(content, "Content não pode ser vazio!");
+        this.content = checkNonNull(content, "Content não pode ser vazio!");
         this.nextCheckTime = checkNonNull(nextCheckTime, "Tempo de checagem não pode ser vazio!");
     }
 
@@ -51,7 +52,7 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final String content
+            final MessageContent content
     ) {
         var now = now();
         return new Message(
@@ -73,7 +74,7 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final String content,
+            final MessageContent content,
             final Instant nextCheckTime
     ) {
         return new Message(

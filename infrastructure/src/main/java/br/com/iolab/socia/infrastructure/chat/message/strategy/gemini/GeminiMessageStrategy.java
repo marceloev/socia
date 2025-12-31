@@ -6,6 +6,7 @@ import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
+import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.domain.chat.message.types.MessageRoleType;
 import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
 import br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.handler.GeminiHandler;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static br.com.iolab.commons.types.Optionals.mapNullable;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output.SCHEMA;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -66,10 +68,12 @@ public class GeminiMessageStrategy implements MessageStrategy {
                         .build()
                 ).build();
 
+        var content = Content.builder()
+                .parts(Part.fromText(mapNullable(message.getContent(), MessageContent::value)))
+                .build();
+
         var history = getHistory();
-        history.addLast(Content.builder()
-                .parts(Part.fromText(message.getContent()))
-                .build());
+        history.addLast(content);
 
         var response = this.client.models.generateContent(assistant.getVersion(), history, config);
 
@@ -102,7 +106,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
                 message.getChatID(),
                 MessageStatusType.COMPLETED,
                 MessageRoleType.ASSISTANT,
-                output.message()
+                MessageContent.of(output.message())
         ).successOrThrow();
     }
 

@@ -45,12 +45,11 @@ public class ProcessMessageUseCaseImpl extends ProcessMessageUseCase {
                     .orElseThrow(ExceptionUtils.badRequest("Não foi possível determinar a última mensagem do chat: " + chatID.value()));
 
             completables.add(CompletableFuture.runAsync(() -> this.performMessageUseCase.execute(new PerformMessageUseCase.Input(lastMessage)))
-                    .thenAccept(_ -> {
-                        Streams.streamOf(messages)
-                                .map(Message::markAsProcessed)
-                                .map(Result::successOrThrow)
-                                .forEach(message -> changeBus.add(this.messageGateway::update, message));
-                    })
+                    .thenAccept(_ -> Streams.streamOf(messages)
+                            .map(Message::markAsProcessed)
+                            .map(Result::successOrThrow)
+                            .forEach(message -> changeBus.add(this.messageGateway::update, message))
+                    )
                     .orTimeout(2, TimeUnit.MINUTES)
                     .exceptionally(throwable -> {
                         log.error("Error while trying to process messages from chat: {}", chatID, throwable);

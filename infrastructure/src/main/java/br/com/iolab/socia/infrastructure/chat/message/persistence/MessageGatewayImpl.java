@@ -8,7 +8,6 @@ import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageID;
 import br.com.iolab.socia.domain.chat.message.MessageSearchQuery;
-import br.com.iolab.socia.domain.chat.message.types.MessageStatusType;
 import br.com.iolab.socia.domain.chat.message.valueobject.ReservationPolicy;
 import lombok.NonNull;
 import org.jooq.DSLContext;

@@ -45,7 +45,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.2'
 
     // Vertex AI - Gemini
-    implementation 'com.google.cloud:google-cloud-vertexai:1.41.0'
+    implementation 'com.google.genai:google-genai:1.32.0'
 
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 

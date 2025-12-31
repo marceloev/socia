@@ -4,6 +4,10 @@ import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCase;
 import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCaseImpl;
 import br.com.iolab.socia.application.chat.message.list.ListMessagesByChatUseCase;
 import br.com.iolab.socia.application.chat.message.list.ListMessagesByChatUseCaseImpl;
+import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCase;
+import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCaseImpl;
+import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCase;
+import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCaseImpl;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
@@ -41,6 +45,19 @@ public class MessageUseCaseConfig {
     protected ListMessagesByChatUseCase listMessagesByChatUseCase () {
         return new ListMessagesByChatUseCaseImpl(
                 messageGateway
+        );
+    }
+
+    @Bean
+    protected PerformMessageUseCase performMessageUseCase () {
+        return new PerformMessageUseCaseImpl();
+    }
+
+    @Bean
+    protected ProcessMessageUseCase processMessageUseCase (final PerformMessageUseCase performMessageUseCase) {
+        return new ProcessMessageUseCaseImpl(
+                messageGateway,
+                performMessageUseCase
         );
     }
 }

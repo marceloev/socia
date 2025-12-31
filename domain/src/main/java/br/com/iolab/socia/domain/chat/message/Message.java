@@ -16,6 +16,8 @@ import java.time.Instant;
 import static br.com.iolab.commons.domain.utils.InstantUtils.now;
 import static br.com.iolab.commons.types.Checks.checkNonNull;
 import static br.com.iolab.commons.types.Checks.checkNotBlank;
+import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.FAILED;
+import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.PROCESSED;
 
 @Getter
 @ToString
@@ -24,6 +26,7 @@ public class Message extends Model<MessageID> {
     private final MessageStatusType status;
     private final MessageRoleType role;
     private final String content;
+    private final Instant nextCheckTime;
 
     @Builder(toBuilder = true, access = AccessLevel.PRIVATE)
     private Message (
@@ -33,13 +36,15 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final String content
+            final String content,
+            final Instant nextCheckTime
     ) {
         super(id, createdAt, updatedAt);
         this.chatID = checkNonNull(chatID, "ChatID não pode ser nulo!");
         this.status = checkNonNull(status, "Status não pode ser nulo!");
         this.role = checkNonNull(role, "Role não pode ser nulo!");
         this.content = checkNotBlank(content, "Content não pode ser vazio!");
+        this.nextCheckTime = checkNonNull(nextCheckTime, "Tempo de checagem não pode ser vazio!");
     }
 
     public static Result<Message> create (
@@ -56,7 +61,8 @@ public class Message extends Model<MessageID> {
                 chatID,
                 status,
                 role,
-                content
+                content,
+                now
         ).validate();
     }
 
@@ -67,7 +73,8 @@ public class Message extends Model<MessageID> {
             final ChatID chatID,
             final MessageStatusType status,
             final MessageRoleType role,
-            final String content
+            final String content,
+            final Instant nextCheckTime
     ) {
         return new Message(
                 id,
@@ -76,7 +83,8 @@ public class Message extends Model<MessageID> {
                 chatID,
                 status,
                 role,
-                content
+                content,
+                nextCheckTime
         );
     }
 
@@ -84,5 +92,21 @@ public class Message extends Model<MessageID> {
     protected Result<Message> validate () {
         var result = Result.builder(this);
         return result.build();
+    }
+
+    public Result<Message> markAsProcessed () {
+        return this.toBuilder()
+                .status(PROCESSED)
+                .nextCheckTime(now())
+                .build()
+                .validate();
+    }
+
+    public Result<Message> markAsFailed () {
+        return this.toBuilder()
+                .status(FAILED)
+                .nextCheckTime(now())
+                .build()
+                .validate();
     }
 }

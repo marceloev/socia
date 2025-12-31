@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 import static br.com.iolab.infrastructure.jooq.generated.tables.Chats.CHATS;
-import static org.jooq.impl.DSL.selectFrom;
 
 @Repository
 public class ChatGatewayImpl extends BasicModelGateway<Chat, ChatID, ChatsRecord> implements ChatGateway {
@@ -34,7 +33,7 @@ public class ChatGatewayImpl extends BasicModelGateway<Chat, ChatID, ChatsRecord
 
     @Override
     public Optional<Chat> findByToAndFrom (@NonNull final Phone to, @NonNull final Phone from) {
-        return selectFrom(CHATS)
+        return this.readOnlyDSLContext.selectFrom(CHATS)
                 .where(CHATS.PHONE_TO.eq(to.value()))
                 .and(CHATS.PHONE_FROM.eq(from.value()))
                 .fetchOptional()

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.bind.Name;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -109,20 +110,20 @@ public class VertexAIConfig {
 
     @ConfigurationProperties(prefix = "socia.assistant.gemini")
     public record Properties(
-            String projectId,
-            String location,
-            String credentials,
-            Integer timeoutMinutes,
-            Integer maxRetryAttempts,
-            Integer maxRetryDelaySeconds
+            @Name("project-id") String projectId,
+            @Name("location") String location,
+            @Name("credentials") String credentials,
+            @Name("timeout-minutes") Integer timeoutMinutes,
+            @Name("max-retry-attempts") Integer maxRetryAttempts,
+            @Name("max-retry-delay-seconds") Integer maxRetryDelaySeconds
     ) {
         public Properties {
-            checkNotBlank(projectId(), "Projeto vertexAI não pode ser vazio");
-            checkNotBlank(location(), "Localização vertexAI não pode ser vazio");
-            checkNotBlank(credentials(), "Credenciais vertexAI não pode ser vazio");
-            checkPositive(timeoutMinutes(), "Timeout vertexAI precisa ser um número válido e positivo");
-            checkPositive(maxRetryAttempts(), "Qtd. tentativas vertexAI precisa ser um número válido e positivo");
-            checkPositive(maxRetryDelaySeconds(), "Máximo delay de re-tentativa vertexAI precisa ser um número válido e positivo");
+            checkNotBlank(projectId, "Projeto vertexAI não pode ser vazio");
+            checkNotBlank(location, "Localização vertexAI não pode ser vazio");
+            checkNotBlank(credentials, "Credenciais vertexAI não pode ser vazio");
+            checkPositive(timeoutMinutes, "Timeout vertexAI precisa ser um número válido e positivo");
+            checkPositive(maxRetryAttempts, "Qtd. tentativas vertexAI precisa ser um número válido e positivo");
+            checkPositive(maxRetryDelaySeconds, "Máximo delay de re-tentativa vertexAI precisa ser um número válido e positivo");
         }
     }
 }

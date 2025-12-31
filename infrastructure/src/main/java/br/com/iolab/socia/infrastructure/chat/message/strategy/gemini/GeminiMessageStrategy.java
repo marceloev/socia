@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,8 +66,12 @@ public class GeminiMessageStrategy implements MessageStrategy {
                         .build()
                 ).build();
 
-        var response = this.client.models.generateContent(assistant.getVersion(), List.of(), config);
+        var history = getHistory();
+        history.addLast(Content.builder()
+                .parts(Part.fromText(message.getContent()))
+                .build());
 
+        var response = this.client.models.generateContent(assistant.getVersion(), history, config);
 
         var turnCounter = new AtomicInteger(0);
         var functionCalls = GeminiHandler.getFunctionCalls(response);
@@ -99,5 +104,9 @@ public class GeminiMessageStrategy implements MessageStrategy {
                 MessageRoleType.ASSISTANT,
                 output.message()
         ).successOrThrow();
+    }
+
+    private @NonNull List<Content> getHistory () {
+        return new ArrayList<>();
     }
 }

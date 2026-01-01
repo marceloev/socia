@@ -9,6 +9,7 @@ import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
+import br.com.iolab.socia.infrastructure.assistant.persistence.AssistantPromptProvider;
 import br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.Content;
@@ -47,6 +48,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
     private static final JsonFormat.Parser DEFAULT_JSON_PARSER = JsonFormat.parser();
 
     private final MessageGateway messageGateway;
+    private final AssistantPromptProvider assistantPromptProvider;
 
     private final VertexAI vertexAI;
     private final List<SafetySetting> safetySettings;
@@ -62,9 +64,8 @@ public class GeminiMessageStrategy implements MessageStrategy {
                     .setModelName(assistant.getVersion())
                     .setSafetySettings(safetySettings)
                     .setSystemInstruction(Content.newBuilder()
-                                    .addParts(Part.newBuilder()
-                                            .setText(assistant.getPrompt())
-                                    ).build()
+                                    .addAllParts(getAllPrompts(assistant))
+                                    .build()
                 /*).setTools(Collections.singletonList(Tool.newBuilder()
                         .addAllFunctionDeclarations(Collections.emptyList())
                         .build()
@@ -174,5 +175,22 @@ public class GeminiMessageStrategy implements MessageStrategy {
 
                     return contents.stream();
                 }).toList().reversed();
+    }
+
+    private List<Part> getAllPrompts (@NonNull final Assistant assistant) {
+        var parts = new ArrayList<Part>();
+
+        parts.add(Part.newBuilder()
+                .setText(assistant.getPrompt())
+                .build()
+        );
+
+        var prompts = this.assistantPromptProvider.getPrompt();
+        parts.add(Part.newBuilder()
+                .setText(prompts.core())
+                .build()
+        );
+
+        return parts;
     }
 }

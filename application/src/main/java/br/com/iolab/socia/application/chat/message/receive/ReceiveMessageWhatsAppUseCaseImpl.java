@@ -2,6 +2,7 @@ package br.com.iolab.socia.application.chat.message.receive;
 
 import br.com.iolab.commons.domain.utils.ExceptionUtils;
 import br.com.iolab.commons.domain.utils.StringUtils;
+import br.com.iolab.commons.types.Optionals;
 import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCase;
 import br.com.iolab.socia.domain.assistant.instance.Instance;
@@ -12,6 +13,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class ReceiveMessageWhatsAppUseCaseImpl extends ReceiveMessageWhatsAppUseCase {
@@ -44,7 +46,7 @@ public class ReceiveMessageWhatsAppUseCaseImpl extends ReceiveMessageWhatsAppUse
                 instance.getId(),
                 Phone.of(input.chat()),
                 Phone.of(instance.getAccount()),
-                MessageContent.of(input.text()),
+                Optionals.mapNullable(input.text(), MessageContent::of),
                 resources
         ));
     }

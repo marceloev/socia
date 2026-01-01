@@ -178,10 +178,13 @@ public class GeminiMessageStrategy implements MessageStrategy {
                     }
 
                     var parts = new ArrayList<Part>();
-                    parts.add(Part.newBuilder()
-                            .setText(message.getContent().value())
-                            .build()
-                    );
+
+                    if (message.getContent() != null) {
+                        parts.add(Part.newBuilder()
+                                .setText(message.getContent().value())
+                                .build()
+                        );
+                    }
 
                     Optional.ofNullable(resourcesByMessage.get(message.getId()))
                             .ifPresent(resources -> {

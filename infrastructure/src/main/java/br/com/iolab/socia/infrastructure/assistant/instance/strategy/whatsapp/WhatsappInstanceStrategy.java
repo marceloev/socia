@@ -38,7 +38,10 @@ public class WhatsappInstanceStrategy implements InstanceStrategy {
     }
 
     @Override
-    public MessageResource retrieveFile (@NonNull final String fileId) {
+    public MessageResource retrieveFile (
+            @NonNull final Instance instance,
+            @NonNull final String fileId
+    ) {
         return this.whatsappClient.retrieveFile(fileId);
     }
 }

@@ -45,7 +45,7 @@ public class Message extends Model<MessageID> {
         this.chatID = checkNonNull(chatID, "ChatID não pode ser nulo!");
         this.status = checkNonNull(status, "Status não pode ser nulo!");
         this.role = checkNonNull(role, "Role não pode ser nulo!");
-        this.content = checkNonNull(content, "Content não pode ser vazio!");
+        this.content = content;
         this.metadata = checkNonNull(metadata, "Metadata não pode ser nulo!");
         this.nextCheckTime = checkNonNull(nextCheckTime, "Tempo de checagem não pode ser vazio!");
     }

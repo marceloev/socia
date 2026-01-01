@@ -36,7 +36,7 @@ public class DefaultInstanceStrategy implements InstanceStrategy {
             @NonNull final String fileId
     ) {
         return switch (instance.getOrigin()) {
-            case WHATSAPP -> this.whatsappInstanceStrategy.retrieveFile(fileId);
+            case WHATSAPP -> this.whatsappInstanceStrategy.retrieveFile(instance, fileId);
         };
     }
 }

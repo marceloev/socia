@@ -6,7 +6,7 @@ CREATE TABLE messages
     chat_id         UUID                     NOT NULL,
     status          VARCHAR(20)              NOT NULL,
     role            VARCHAR(20)              NOT NULL,
-    content         TEXT                     NOT NULL,
+    content         TEXT,
     metadata        jsonb                    not null,
     next_check_time timestamp with time zone not null,
     CONSTRAINT pk_messages PRIMARY KEY (id),

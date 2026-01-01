@@ -1,18 +1,25 @@
 package br.com.iolab.socia.application.chat.message.receive;
 
 import br.com.iolab.commons.domain.utils.ExceptionUtils;
+import br.com.iolab.commons.domain.utils.StringUtils;
 import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.application.chat.message.create.CreateMessageUseCase;
 import br.com.iolab.socia.domain.assistant.instance.Instance;
 import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
+import br.com.iolab.socia.domain.assistant.instance.InstanceStrategy;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
+
 @RequiredArgsConstructor
 public class ReceiveMessageWhatsAppUseCaseImpl extends ReceiveMessageWhatsAppUseCase {
     private final InstanceGateway instanceGateway;
+    private final InstanceStrategy instanceStrategy;
     private final CreateMessageUseCase createMessageUseCase;
+
+    //Esse cara vai ser convertido em um instanceStrategy.receive(), precisa ser genérico.
 
     @Override
     protected @NonNull CreateMessageUseCase.Output perform (@NonNull final ReceiveMessageWhatsAppUseCase.Input input) {
@@ -23,13 +30,22 @@ public class ReceiveMessageWhatsAppUseCaseImpl extends ReceiveMessageWhatsAppUse
         var instance = this.instanceGateway.findById(input.id())
                 .orElseThrow(ExceptionUtils.notFound(input.id(), Instance.class));
 
-        var createMessageInput = new CreateMessageUseCase.Input(
+        var resources = new ArrayList<CreateMessageUseCase.Input.MessageResource>();
+        if (StringUtils.isNotEmpty(input.fileId())) {
+            var resource = this.instanceStrategy.retrieveFile(instance, input.fileId());
+            resources.add(new CreateMessageUseCase.Input.MessageResource(
+                    resource.getType(),
+                    resource.getContentType(),
+                    resource.getFile()
+            ));
+        }
+
+        return this.createMessageUseCase.perform(new CreateMessageUseCase.Input(
                 instance.getId(),
                 Phone.of(input.chat()),
                 Phone.of(instance.getAccount()),
-                MessageContent.of(input.text())
-        );
-
-        return this.createMessageUseCase.perform(createMessageInput);
+                MessageContent.of(input.text()),
+                resources
+        ));
     }
 }

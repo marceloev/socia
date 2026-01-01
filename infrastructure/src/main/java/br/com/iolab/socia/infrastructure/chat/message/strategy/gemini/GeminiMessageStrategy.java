@@ -1,6 +1,7 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini;
 
 import br.com.iolab.commons.domain.exceptions.InternalErrorException;
+import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.json.Json;
 import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.chat.Chat;
@@ -8,10 +9,13 @@ import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
+import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
+import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.infrastructure.assistant.persistence.AssistantPromptProvider;
 import br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output;
 import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.Blob;
 import com.google.cloud.vertexai.api.Content;
 import com.google.cloud.vertexai.api.FunctionCallingConfig;
 import com.google.cloud.vertexai.api.GenerationConfig;
@@ -20,6 +24,7 @@ import com.google.cloud.vertexai.api.SafetySetting;
 import com.google.cloud.vertexai.api.ToolConfig;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.util.JsonFormat;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +34,14 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static br.com.iolab.socia.domain.chat.message.types.MessageRoleType.ASSISTANT;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.COMPLETED;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output.schema;
+import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.util.GeminiUtil.mimeType;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.util.GeminiUtil.role;
 import static com.google.cloud.vertexai.api.FunctionCallingConfig.Mode.AUTO;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -48,6 +56,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
     private static final JsonFormat.Parser DEFAULT_JSON_PARSER = JsonFormat.parser();
 
     private final MessageGateway messageGateway;
+    private final MessageResourceGateway messageResourceGateway;
     private final AssistantPromptProvider assistantPromptProvider;
 
     private final VertexAI vertexAI;
@@ -132,6 +141,12 @@ public class GeminiMessageStrategy implements MessageStrategy {
     }
 
     private @NonNull List<Content> findChatHistory (@NonNull final ChatID chatID) {
+        var messages = this.messageGateway.findAllByChatID(chatID);
+        var messageIds = messages.stream().map(Model::getId).collect(Collectors.toSet());
+
+        var resourcesByMessage = this.messageResourceGateway.findAllByMessageIdIn(messageIds).stream()
+                .collect(Collectors.groupingBy(MessageResource::getMessageID));
+
         return this.messageGateway.findAllByChatID(chatID).stream()
                 .flatMap(message -> {
                     var contents = new ArrayList<Content>();
@@ -167,6 +182,18 @@ public class GeminiMessageStrategy implements MessageStrategy {
                             .setText(message.getContent().value())
                             .build()
                     );
+
+                    Optional.ofNullable(resourcesByMessage.get(message.getId()))
+                            .ifPresent(resources -> {
+                                resources.forEach(resource ->
+                                        parts.add(Part.newBuilder()
+                                                .setInlineData(Blob.newBuilder()
+                                                        .setMimeType(mimeType(resource))
+                                                        .setData(ByteString.copyFrom(resource.getFile()))
+                                                        .build()
+                                                ).build())
+                                );
+                            });
 
                     contents.add(Content.newBuilder()
                             .setRole(role(message))

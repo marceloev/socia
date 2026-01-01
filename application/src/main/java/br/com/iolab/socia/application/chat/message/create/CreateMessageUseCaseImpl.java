@@ -11,6 +11,8 @@ import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
+import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
+import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.member.Member;
 import br.com.iolab.socia.domain.member.MemberGateway;
 import br.com.iolab.socia.domain.member.types.MemberRoleType;
@@ -39,6 +41,7 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
 
     private final ChatGateway chatGateway;
     private final MessageGateway messageGateway;
+    private final MessageResourceGateway messageResourceGateway;
 
     @Override
     public @NonNull Output perform (@NonNull final CreateMessageUseCase.Input input) {
@@ -156,8 +159,20 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
                 input.content(),
                 Collections.emptyMap()
         ).successOrThrow();
-
         this.create(this.messageGateway, message);
+
+        var messageResources = Streams.streamOf(input.resources())
+                .map(resource -> {
+                    var messageResource = MessageResource.create(
+                            message.getId(),
+                            resource.type(),
+                            resource.contentType(),
+                            resource.content()
+                    );
+
+                    return messageResource.successOrThrow();
+                }).toList();
+        this.create(this.messageResourceGateway, messageResources);
 
         return new Output(
                 message.getId(),

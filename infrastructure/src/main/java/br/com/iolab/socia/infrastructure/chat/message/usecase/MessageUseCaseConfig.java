@@ -18,6 +18,7 @@ import br.com.iolab.socia.domain.assistant.instance.InstanceStrategy;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
+import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.member.MemberGateway;
 import br.com.iolab.socia.domain.organization.OrganizationGateway;
 import br.com.iolab.socia.domain.user.UserGateway;
@@ -39,6 +40,7 @@ public class MessageUseCaseConfig {
     private final ChatGateway chatGateway;
     private final MessageGateway messageGateway;
     private final MessageStrategy messageStrategy;
+    private final MessageResourceGateway messageResourceGateway;
 
     @Bean
     protected CreateMessageUseCase createMessageUseCase () {
@@ -49,7 +51,8 @@ public class MessageUseCaseConfig {
                 instanceGateway,
                 assistantGateway,
                 chatGateway,
-                messageGateway
+                messageGateway,
+                messageResourceGateway
         );
     }
 
@@ -93,6 +96,7 @@ public class MessageUseCaseConfig {
     protected ReceiveMessageWhatsAppUseCase receiveMessageWhatsAppUseCase (final CreateMessageUseCase createMessageUseCase) {
         return new ReceiveMessageWhatsAppUseCaseImpl(
                 instanceGateway,
+                instanceStrategy,
                 createMessageUseCase
         );
     }

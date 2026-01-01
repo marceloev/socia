@@ -16,12 +16,12 @@ public class MessageScheduled {
     private final ProcessMessageUseCase processMessageUseCase;
     private final SendMessageUseCase sendMessageUseCase;
 
-    @Scheduled(fixedDelay = 3, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.SECONDS)
     protected void process () {
         this.processMessageUseCase.execute();
     }
 
-    @Scheduled(fixedDelay = 3, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.SECONDS)
     protected void send () {
         this.sendMessageUseCase.execute();
     }

@@ -1,9 +1,11 @@
 package br.com.iolab.socia.application.chat.message.create;
 
-import br.com.iolab.commons.domain.exceptions.BadRequestException;
+import br.com.iolab.commons.domain.utils.ExceptionUtils;
 import br.com.iolab.commons.types.Streams;
 import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
+import br.com.iolab.socia.domain.assistant.instance.Instance;
+import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
 import br.com.iolab.socia.domain.assistant.types.AssistantProviderType;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatGateway;
@@ -11,8 +13,10 @@ import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.member.Member;
 import br.com.iolab.socia.domain.member.MemberGateway;
+import br.com.iolab.socia.domain.member.types.MemberRoleType;
 import br.com.iolab.socia.domain.organization.Organization;
 import br.com.iolab.socia.domain.organization.OrganizationGateway;
+import br.com.iolab.socia.domain.organization.OrganizationID;
 import br.com.iolab.socia.domain.user.User;
 import br.com.iolab.socia.domain.user.UserGateway;
 import lombok.NonNull;
@@ -29,13 +33,15 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
     private final UserGateway userGateway;
     private final MemberGateway memberGateway;
     private final OrganizationGateway organizationGateway;
+
+    private final InstanceGateway instanceGateway;
     private final AssistantGateway assistantGateway;
 
     private final ChatGateway chatGateway;
     private final MessageGateway messageGateway;
 
     @Override
-    protected @NonNull Output perform (@NonNull final CreateMessageUseCase.Input input) {
+    public @NonNull Output perform (@NonNull final CreateMessageUseCase.Input input) {
         Chat chat;
 
         var existingUser = this.userGateway.findByPhone(input.from());
@@ -63,6 +69,7 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
             chat = Chat.create(
                     createOrganization.getId(),
                     createAssistant.getId(),
+                    input.instanceID(),
                     createUser.getId(),
                     input.to(),
                     input.from(),
@@ -81,21 +88,58 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
             } else {
                 var member = this.memberGateway.findAllByUserID(existingUser.get().getId());
 
-                var organizationIDs = Streams.streamOf(member)
-                        .map(Member::getOrganizationID)
-                        .collect(Collectors.toSet());
+                var instance = this.instanceGateway.findById(input.instanceID())
+                        .orElseThrow(ExceptionUtils.notFound(input.instanceID(), Instance.class));
 
-                var assistants = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).stream()
-                        .filter(it -> it.getPhone().equals(input.to()))
-                        .toList();
+                Assistant assistant;
+                if (instance.isShowcase()) {
+                    var organizationIDs = Streams.streamOf(member)
+                            .map(Member::getOrganizationID)
+                            .collect(Collectors.toSet());
 
-                if (assistants.size() != 1) {
-                    throw BadRequestException.with("Não foi possível identificar a assistente através do número: " + input.to().value());
+                    var assistants = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).stream()
+                            .filter(it -> it.getPhone().equals(input.to()))
+                            .toList();
+
+                    if (assistants.size() != 1) {
+                        var ownerMember = Streams.streamOf(member)
+                                .filter(it -> MemberRoleType.OWNER.equals(it.getRole()))
+                                .findFirst();
+
+                        OrganizationID organizationID;
+                        if (ownerMember.isEmpty()) {
+                            var createOrganization = Organization.create(
+                                    "Empresa ".concat(input.from().value()),
+                                    null
+                            ).successOrThrow();
+                            this.create(this.organizationGateway, createOrganization);
+
+                            organizationID = createOrganization.getId();
+                        } else {
+                            organizationID = ownerMember.get().getOrganizationID();
+                        }
+
+                        assistant = Assistant.create(
+                                organizationID,
+                                input.to(),
+                                AssistantProviderType.GEMINI,
+                                "gemini-3-flash-preview",
+                                "Feliz"
+                        ).successOrThrow();
+                        this.create(this.assistantGateway, assistant);
+                    } else {
+                        assistant = assistants.getFirst();
+                    }
+                } else {
+                    assistant = this.assistantGateway.findById(instance.getAssistantID())
+                            .filter(it -> member.stream().anyMatch(m -> m.getOrganizationID().equals(it.getOrganizationID())))
+                            .orElseThrow(ExceptionUtils.notFound(instance.getAssistantID(), Assistant.class));
                 }
 
                 chat = Chat.create(
-                        assistants.getFirst().getOrganizationID(),
-                        assistants.getFirst().getId(),
+                        assistant.getOrganizationID(),
+                        assistant.getId(),
+                        instance.getId(),
                         existingUser.get().getId(),
                         input.to(),
                         input.from(),

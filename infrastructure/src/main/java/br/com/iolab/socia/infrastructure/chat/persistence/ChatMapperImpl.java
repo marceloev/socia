@@ -4,6 +4,7 @@ import br.com.iolab.commons.domain.model.ModelID;
 import br.com.iolab.commons.domain.model.ModelMapper;
 import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.domain.assistant.AssistantID;
+import br.com.iolab.socia.domain.assistant.instance.InstanceID;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.types.ChatStatusType;
@@ -25,6 +26,7 @@ public class ChatMapperImpl extends ModelMapper<Chat, ChatsRecord> {
                 chat.getUpdatedAt(),
                 mapNullable(chat.getOrganizationID(), ModelID::value),
                 mapNullable(chat.getAssistantID(), ModelID::value),
+                mapNullable(chat.getInstanceID(), ModelID::value),
                 mapNullable(chat.getUserID(), ModelID::value),
                 mapNullable(chat.getTo(), Phone::value),
                 mapNullable(chat.getFrom(), Phone::value),
@@ -41,6 +43,7 @@ public class ChatMapperImpl extends ModelMapper<Chat, ChatsRecord> {
                 record.getUpdatedAt(),
                 mapNullable(record.getOrganizationId(), OrganizationID::from),
                 mapNullable(record.getAssistantId(), AssistantID::from),
+                mapNullable(record.getInstanceId(), InstanceID::from),
                 mapNullable(record.getUserId(), UserID::from),
                 mapNullable(record.getPhoneTo(), Phone::of),
                 mapNullable(record.getPhoneFrom(), Phone::of),

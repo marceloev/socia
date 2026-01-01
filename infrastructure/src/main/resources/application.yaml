@@ -52,3 +52,6 @@ socia:
       timeout-minutes: ${GEMINI_TIMEOUT_MINUTES:5}
       max-retry-attempts: ${GEMINI_MAX_RETRY_ATTEMPTS:5}
       max-retry-delay-seconds: ${GEMINI_MAX_RETRY_DELAY_SECONDS:60}
+  whatsapp:
+    client:
+      api-url: http://localhost:8081

@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static br.com.iolab.socia.domain.chat.message.types.MessageRoleType.ASSISTANT;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.COMPLETED;
+import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output.schema;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.util.GeminiUtil.role;
 import static com.google.cloud.vertexai.api.FunctionCallingConfig.Mode.AUTO;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -75,7 +76,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
                     ).setGenerationConfig(GenerationConfig.newBuilder()
                             .setTemperature(DEFAULT_TEMPERATURE)
                             .setResponseMimeType(APPLICATION_JSON_VALUE)
-                            .setResponseSchema(Output.schema())
+                            .setResponseSchema(schema())
                             .build()
                     ).build();
 

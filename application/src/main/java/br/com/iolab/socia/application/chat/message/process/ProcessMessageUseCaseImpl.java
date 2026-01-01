@@ -32,32 +32,31 @@ public class ProcessMessageUseCaseImpl extends ProcessMessageUseCase {
         ).stream().collect(Collectors.groupingBy(Message::getChatID));
 
         if (messagesByChat.isEmpty()) {
-            log.debug("No messages found...");
             return;
         }
 
         var changeBus = bus();
 
         var completable = new ArrayList<CompletableFuture<?>>();
-        messagesByChat.forEach((chatID, messages) -> {
-            completable.add(CompletableFuture.runAsync(() -> this.performMessageUseCase.execute(new PerformMessageUseCase.Input(chatID)))
-                    .thenAccept(_ -> Streams.streamOf(messages)
-                            .map(Message::markAsProcessed)
-                            .map(Result::successOrThrow)
-                            .forEach(message -> changeBus.add(this.messageGateway::update, message))
-                    )
-                    .orTimeout(2, TimeUnit.MINUTES)
-                    .exceptionally(throwable -> {
-                        log.error("Error while trying to process messages from chat: {}", chatID, throwable);
-
-                        Streams.streamOf(messages)
-                                .map(Message::markAsFailed)
+        messagesByChat.forEach((chatID, messages) -> completable.add(
+                CompletableFuture.runAsync(() -> this.performMessageUseCase.execute(new PerformMessageUseCase.Input(chatID)))
+                        .thenAccept(_ -> Streams.streamOf(messages)
+                                .map(Message::markAsProcessed)
                                 .map(Result::successOrThrow)
-                                .forEach(message -> changeBus.add(this.messageGateway::update, message));
+                                .forEach(message -> changeBus.add(this.messageGateway::update, message))
+                        )
+                        .orTimeout(2, TimeUnit.MINUTES)
+                        .exceptionally(throwable -> {
+                            log.error("Error while trying to process messages from chat: {}", chatID, throwable);
 
-                        return null;
-                    }));
-        });
+                            Streams.streamOf(messages)
+                                    .map(Message::markAsFailed)
+                                    .map(Result::successOrThrow)
+                                    .forEach(message -> changeBus.add(this.messageGateway::update, message));
+
+                            return null;
+                        }))
+        );
 
         CompletableFuture.allOf(completable.toArray(new CompletableFuture[0])).join();
     }

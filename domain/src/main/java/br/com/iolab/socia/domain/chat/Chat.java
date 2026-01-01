@@ -4,6 +4,7 @@ import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.domain.validation.Result;
 import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.domain.assistant.AssistantID;
+import br.com.iolab.socia.domain.assistant.instance.InstanceID;
 import br.com.iolab.socia.domain.chat.types.ChatStatusType;
 import br.com.iolab.socia.domain.organization.OrganizationID;
 import br.com.iolab.socia.domain.user.UserID;
@@ -24,6 +25,7 @@ import static br.com.iolab.socia.domain.chat.types.ChatStatusType.CREATED;
 public class Chat extends Model<ChatID> {
     private final OrganizationID organizationID;
     private final AssistantID assistantID;
+    private final InstanceID instanceID;
     private final UserID userID;
     private final Phone to;
     private final Phone from;
@@ -37,6 +39,7 @@ public class Chat extends Model<ChatID> {
             @NonNull final Instant updatedAt,
             final OrganizationID organizationID,
             final AssistantID assistantID,
+            final InstanceID instanceID,
             final UserID userID,
             final Phone to,
             final Phone from,
@@ -46,6 +49,7 @@ public class Chat extends Model<ChatID> {
         super(id, createdAt, updatedAt);
         this.organizationID = checkNonNull(organizationID, "OrganizationID não pode ser nulo!");
         this.assistantID = checkNonNull(assistantID, "AssistantID não pode ser nulo!");
+        this.instanceID = checkNonNull(instanceID, "InstanceID não pode ser nulo!");
         this.userID = checkNonNull(userID, "UserID não pode ser nulo!");
         this.to = checkNonNull(to, "Destinatário não pode ser nulo!");
         this.from = checkNonNull(from, "Remetente não pode ser nulo!");
@@ -56,6 +60,7 @@ public class Chat extends Model<ChatID> {
     public static Result<Chat> create (
             final OrganizationID organizationID,
             final AssistantID assistantID,
+            final InstanceID instanceID,
             final UserID userID,
             final Phone to,
             final Phone from,
@@ -68,6 +73,7 @@ public class Chat extends Model<ChatID> {
                 now,
                 organizationID,
                 assistantID,
+                instanceID,
                 userID,
                 to,
                 from,
@@ -82,6 +88,7 @@ public class Chat extends Model<ChatID> {
             final Instant updatedAt,
             final OrganizationID organizationID,
             final AssistantID assistantID,
+            final InstanceID instanceID,
             final UserID userID,
             final Phone to,
             final Phone from,
@@ -94,6 +101,7 @@ public class Chat extends Model<ChatID> {
                 updatedAt,
                 organizationID,
                 assistantID,
+                instanceID,
                 userID,
                 to,
                 from,

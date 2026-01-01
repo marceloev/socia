@@ -12,6 +12,6 @@ public record CreateMessageRequest(
         @JsonProperty(value = "content", required = true) MessageContent content
 ) {
     public @NonNull CreateMessageUseCase.Input toInput () {
-        return new CreateMessageUseCase.Input(to(), from(), content());
+        return new CreateMessageUseCase.Input(null, to(), from(), content());
     }
 }

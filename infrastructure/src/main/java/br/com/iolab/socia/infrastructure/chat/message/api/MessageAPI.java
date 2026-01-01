@@ -1,6 +1,7 @@
 package br.com.iolab.socia.infrastructure.chat.message.api;
 
 import br.com.iolab.socia.infrastructure.chat.message.models.request.CreateMessageRequest;
+import br.com.iolab.socia.infrastructure.chat.message.models.request.CreateMessageWhatsAppRequest;
 import br.com.iolab.socia.infrastructure.chat.message.models.response.ListMessagesResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -17,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.UUID;
 
-@Tag(name = "Messages", description = "Gerenciamento de mensagens")
 @RequestMapping(path = "/messages")
+@Tag(name = "Messages", description = "Gerenciamento de mensagens")
 public interface MessageAPI {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -29,6 +30,15 @@ public interface MessageAPI {
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor"),
     })
     ResponseEntity<?> create (@NonNull @RequestBody CreateMessageRequest request);
+
+    @PostMapping(path = "/whatsapp", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Criar uma nova mensagem do whatsapp")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Mensagem criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor"),
+    })
+    ResponseEntity<?> receiveWhatsapp (@NonNull @RequestBody CreateMessageWhatsAppRequest request);
 
     @GetMapping(path = "/chat/{chatId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar mensagens de um chat")

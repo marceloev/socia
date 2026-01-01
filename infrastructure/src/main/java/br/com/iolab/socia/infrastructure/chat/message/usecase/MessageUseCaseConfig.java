@@ -8,9 +8,13 @@ import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCase
 import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCaseImpl;
 import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCase;
 import br.com.iolab.socia.application.chat.message.process.ProcessMessageUseCaseImpl;
+import br.com.iolab.socia.application.chat.message.receive.ReceiveMessageWhatsAppUseCase;
+import br.com.iolab.socia.application.chat.message.receive.ReceiveMessageWhatsAppUseCaseImpl;
 import br.com.iolab.socia.application.chat.message.send.SendMessageUseCase;
 import br.com.iolab.socia.application.chat.message.send.SendMessageUseCaseImpl;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
+import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
+import br.com.iolab.socia.domain.assistant.instance.InstanceStrategy;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.MessageStrategy;
@@ -27,7 +31,10 @@ public class MessageUseCaseConfig {
     private final UserGateway userGateway;
     private final MemberGateway memberGateway;
     private final OrganizationGateway organizationGateway;
+
     private final AssistantGateway assistantGateway;
+    private final InstanceGateway instanceGateway;
+    private final InstanceStrategy instanceStrategy;
 
     private final ChatGateway chatGateway;
     private final MessageGateway messageGateway;
@@ -39,6 +46,7 @@ public class MessageUseCaseConfig {
                 userGateway,
                 memberGateway,
                 organizationGateway,
+                instanceGateway,
                 assistantGateway,
                 chatGateway,
                 messageGateway
@@ -74,7 +82,18 @@ public class MessageUseCaseConfig {
     @Bean
     protected SendMessageUseCase sendMessageUseCase () {
         return new SendMessageUseCaseImpl(
-                messageGateway
+                chatGateway,
+                messageGateway,
+                instanceGateway,
+                instanceStrategy
+        );
+    }
+
+    @Bean
+    protected ReceiveMessageWhatsAppUseCase receiveMessageWhatsAppUseCase (final CreateMessageUseCase createMessageUseCase) {
+        return new ReceiveMessageWhatsAppUseCaseImpl(
+                instanceGateway,
+                createMessageUseCase
         );
     }
 }

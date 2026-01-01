@@ -14,12 +14,10 @@ import lombok.ToString;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
 
 import static br.com.iolab.commons.domain.utils.InstantUtils.now;
 import static br.com.iolab.commons.types.Checks.checkNonNull;
-import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.FAILED;
-import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.PROCESSED;
+import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.*;
 
 @Getter
 @ToString
@@ -115,6 +113,13 @@ public class Message extends Model<MessageID> {
         return this.toBuilder()
                 .status(FAILED)
                 .nextCheckTime(now())
+                .build()
+                .validate();
+    }
+
+    public Result<Message> markAsSent () {
+        return this.toBuilder()
+                .status(SENT)
                 .build()
                 .validate();
     }

@@ -4,6 +4,7 @@ CREATE TABLE chats (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
     organization_id UUID NOT NULL,
     assistant_id UUID NOT NULL,
+    instance_id uuid not null,
     user_id UUID NOT NULL,
     phone_to VARCHAR(20) NOT NULL,
     phone_from VARCHAR(20) NOT NULL,

@@ -2,9 +2,9 @@ package br.com.iolab.socia.domain.chat;
 
 import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.domain.validation.Result;
-import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.domain.assistant.AssistantID;
 import br.com.iolab.socia.domain.assistant.instance.InstanceID;
+import br.com.iolab.socia.domain.chat.fields.ChatAccount;
 import br.com.iolab.socia.domain.chat.types.ChatStatusType;
 import br.com.iolab.socia.domain.organization.OrganizationID;
 import br.com.iolab.socia.domain.user.UserID;
@@ -27,8 +27,7 @@ public class Chat extends Model<ChatID> {
     private final AssistantID assistantID;
     private final InstanceID instanceID;
     private final UserID userID;
-    private final Phone to;
-    private final Phone from;
+    private final ChatAccount account;
     private final ChatStatusType status;
     private final Long count;
 
@@ -41,8 +40,7 @@ public class Chat extends Model<ChatID> {
             final AssistantID assistantID,
             final InstanceID instanceID,
             final UserID userID,
-            final Phone to,
-            final Phone from,
+            final ChatAccount account,
             final ChatStatusType status,
             final Long count
     ) {
@@ -51,8 +49,7 @@ public class Chat extends Model<ChatID> {
         this.assistantID = checkNonNull(assistantID, "AssistantID não pode ser nulo!");
         this.instanceID = checkNonNull(instanceID, "InstanceID não pode ser nulo!");
         this.userID = checkNonNull(userID, "UserID não pode ser nulo!");
-        this.to = checkNonNull(to, "Destinatário não pode ser nulo!");
-        this.from = checkNonNull(from, "Remetente não pode ser nulo!");
+        this.account = checkNonNull(account, "Conta não pode ser nulo!");
         this.status = checkNonNull(status, "Status não pode ser nulo!");
         this.count = checkNonNull(count, "Count não pode ser nulo!");
     }
@@ -62,8 +59,7 @@ public class Chat extends Model<ChatID> {
             final AssistantID assistantID,
             final InstanceID instanceID,
             final UserID userID,
-            final Phone to,
-            final Phone from,
+            final ChatAccount account,
             final Long count
     ) {
         var now = now();
@@ -75,8 +71,7 @@ public class Chat extends Model<ChatID> {
                 assistantID,
                 instanceID,
                 userID,
-                to,
-                from,
+                account,
                 CREATED,
                 count
         ).validate();
@@ -90,8 +85,7 @@ public class Chat extends Model<ChatID> {
             final AssistantID assistantID,
             final InstanceID instanceID,
             final UserID userID,
-            final Phone to,
-            final Phone from,
+            final ChatAccount account,
             final ChatStatusType status,
             final Long count
     ) {
@@ -103,8 +97,7 @@ public class Chat extends Model<ChatID> {
                 assistantID,
                 instanceID,
                 userID,
-                to,
-                from,
+                account,
                 status,
                 count
         );

@@ -1,11 +1,12 @@
 package br.com.iolab.socia.infrastructure.chat.persistence;
 
 import br.com.iolab.commons.infrastructure.persistence.BasicModelGateway;
-import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.infrastructure.jooq.generated.tables.records.ChatsRecord;
+import br.com.iolab.socia.domain.assistant.instance.InstanceID;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.ChatID;
+import br.com.iolab.socia.domain.chat.fields.ChatAccount;
 import lombok.NonNull;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
@@ -32,10 +33,13 @@ public class ChatGatewayImpl extends BasicModelGateway<Chat, ChatID, ChatsRecord
     }
 
     @Override
-    public Optional<Chat> findByToAndFrom (@NonNull final Phone to, @NonNull final Phone from) {
+    public Optional<Chat> findByInstanceIDAndAccount (
+            @NonNull final InstanceID instanceID,
+            @NonNull final ChatAccount account
+    ) {
         return this.readOnlyDSLContext.selectFrom(CHATS)
-                .where(CHATS.PHONE_TO.eq(to.value()))
-                .and(CHATS.PHONE_FROM.eq(from.value()))
+                .where(CHATS.INSTANCE_ID.eq(instanceID.value()))
+                .and(CHATS.ACCOUNT.eq(account.value()))
                 .fetchOptional()
                 .map(this.mapper::toModel);
     }

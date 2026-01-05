@@ -7,6 +7,7 @@ import br.com.iolab.socia.domain.assistant.AssistantID;
 import br.com.iolab.socia.domain.assistant.instance.InstanceID;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatID;
+import br.com.iolab.socia.domain.chat.fields.ChatAccount;
 import br.com.iolab.socia.domain.chat.types.ChatStatusType;
 import br.com.iolab.socia.domain.organization.OrganizationID;
 import br.com.iolab.socia.domain.user.UserID;
@@ -28,8 +29,7 @@ public class ChatMapperImpl extends ModelMapper<Chat, ChatsRecord> {
                 mapNullable(chat.getAssistantID(), ModelID::value),
                 mapNullable(chat.getInstanceID(), ModelID::value),
                 mapNullable(chat.getUserID(), ModelID::value),
-                mapNullable(chat.getTo(), Phone::value),
-                mapNullable(chat.getFrom(), Phone::value),
+                mapNullable(chat.getAccount(), ChatAccount::value),
                 mapNullable(chat.getStatus(), Enum::name),
                 chat.getCount()
         );
@@ -45,8 +45,7 @@ public class ChatMapperImpl extends ModelMapper<Chat, ChatsRecord> {
                 mapNullable(record.getAssistantId(), AssistantID::from),
                 mapNullable(record.getInstanceId(), InstanceID::from),
                 mapNullable(record.getUserId(), UserID::from),
-                mapNullable(record.getPhoneTo(), Phone::of),
-                mapNullable(record.getPhoneFrom(), Phone::of),
+                mapNullable(record.getAccount(), ChatAccount::of),
                 mapNullable(record.getStatus(), ChatStatusType::valueOf),
                 record.getCount()
         );

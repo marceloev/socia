@@ -2,11 +2,11 @@ package br.com.iolab.socia.application.chat.message.create;
 
 import br.com.iolab.commons.domain.utils.ExceptionUtils;
 import br.com.iolab.commons.types.Streams;
+import br.com.iolab.commons.types.fields.Phone;
 import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.assistant.instance.Instance;
 import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
-import br.com.iolab.socia.domain.assistant.types.AssistantProviderType;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.Message;
@@ -18,7 +18,6 @@ import br.com.iolab.socia.domain.member.MemberGateway;
 import br.com.iolab.socia.domain.member.types.MemberRoleType;
 import br.com.iolab.socia.domain.organization.Organization;
 import br.com.iolab.socia.domain.organization.OrganizationGateway;
-import br.com.iolab.socia.domain.organization.OrganizationID;
 import br.com.iolab.socia.domain.user.User;
 import br.com.iolab.socia.domain.user.UserGateway;
 import lombok.NonNull;
@@ -45,111 +44,75 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
 
     @Override
     public @NonNull Output perform (@NonNull final CreateMessageUseCase.Input input) {
+        var existingChat = this.chatGateway.findByInstanceIDAndAccount(input.instanceID(), input.account());
+
         Chat chat;
+        if (existingChat.isEmpty()) {
+            var instance = this.instanceGateway.findById(input.instanceID())
+                    .orElseThrow(ExceptionUtils.notFound(input.instanceID(), Instance.class));
 
-        var existingUser = this.userGateway.findByPhone(input.from());
-        if (existingUser.isEmpty()) {
-            var createUser = User.prospect(
-                    input.from()
-            ).successOrThrow();
-            this.create(this.userGateway, createUser);
+            var user = switch (instance.getOrigin()) {
+                case WHATSAPP -> {
+                    var phone = Phone.of(input.account().value());
+                    yield this.userGateway.findByPhone(phone).orElseGet(() -> {
+                        var createUser = User.prospect(phone).successOrThrow();
+                        this.create(this.userGateway, createUser);
+                        return createUser;
+                    });
+                }
+            };
 
-            var createOrganization = Organization.create(
-                    "Empresa ".concat(input.from().value()),
-                    null
-            ).successOrThrow();
-            this.create(this.organizationGateway, createOrganization);
+            var member = this.memberGateway.findAllByUserID(user.getId());
 
-            var createAssistant = Assistant.create(
-                    createOrganization.getId(),
-                    input.to(),
-                    AssistantProviderType.GEMINI,
-                    "gemini-3-flash-preview",
-                    "Feliz"
-            ).successOrThrow();
-            this.create(this.assistantGateway, createAssistant);
+            Assistant assistant;
+            if (instance.isShowcase()) {
+                Organization organization;
+                if (member.isEmpty()) {
+                    organization = Organization.create(
+                            "Company ".concat(input.account().value()),
+                            null
+                    ).successOrThrow();
+                    this.create(this.organizationGateway, organization);
 
-            chat = Chat.create(
-                    createOrganization.getId(),
-                    createAssistant.getId(),
-                    input.instanceID(),
-                    createUser.getId(),
-                    input.to(),
-                    input.from(),
-                    1L
-            ).successOrThrow();
+                    var createMember = Member.create(
+                            organization.getId(),
+                            user.getId(),
+                            MemberRoleType.OWNER
+                    ).successOrThrow();
+                    this.create(this.memberGateway, createMember);
 
-            this.create(this.chatGateway, chat);
-        } else {
-            var existingChat = this.chatGateway.findByToAndFrom(input.to(), input.from());
-            if (existingChat.isPresent()) {
-                chat = existingChat.get()
-                        .incrementMessageCount()
-                        .successOrThrow();
-
-                this.update(this.chatGateway, chat);
-            } else {
-                var member = this.memberGateway.findAllByUserID(existingUser.get().getId());
-
-                var instance = this.instanceGateway.findById(input.instanceID())
-                        .orElseThrow(ExceptionUtils.notFound(input.instanceID(), Instance.class));
-
-                Assistant assistant;
-                if (instance.isShowcase()) {
+                    assistant = Assistant.suggest(
+                            organization.getId(),
+                            Phone.of(input.account().value()) //Unuse
+                    ).successOrThrow();
+                    this.create(this.assistantGateway, assistant);
+                } else {
                     var organizationIDs = Streams.streamOf(member)
                             .map(Member::getOrganizationID)
                             .collect(Collectors.toSet());
 
-                    var assistants = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).stream()
-                            .filter(it -> it.getPhone().equals(input.to()))
-                            .toList();
-
-                    if (assistants.size() != 1) {
-                        var ownerMember = Streams.streamOf(member)
-                                .filter(it -> MemberRoleType.OWNER.equals(it.getRole()))
-                                .findFirst();
-
-                        OrganizationID organizationID;
-                        if (ownerMember.isEmpty()) {
-                            var createOrganization = Organization.create(
-                                    "Empresa ".concat(input.from().value()),
-                                    null
-                            ).successOrThrow();
-                            this.create(this.organizationGateway, createOrganization);
-
-                            organizationID = createOrganization.getId();
-                        } else {
-                            organizationID = ownerMember.get().getOrganizationID();
-                        }
-
-                        assistant = Assistant.create(
-                                organizationID,
-                                input.to(),
-                                AssistantProviderType.GEMINI,
-                                "gemini-3-flash-preview",
-                                "Feliz"
-                        ).successOrThrow();
-                        this.create(this.assistantGateway, assistant);
-                    } else {
-                        assistant = assistants.getFirst();
-                    }
-                } else {
-                    assistant = this.assistantGateway.findById(instance.getAssistantID())
-                            .filter(it -> member.stream().anyMatch(m -> m.getOrganizationID().equals(it.getOrganizationID())))
-                            .orElseThrow(ExceptionUtils.notFound(instance.getAssistantID(), Assistant.class));
+                    assistant = this.assistantGateway.findAllByOrganizationIDIn(organizationIDs).getFirst();
                 }
-
-                chat = Chat.create(
-                        assistant.getOrganizationID(),
-                        assistant.getId(),
-                        instance.getId(),
-                        existingUser.get().getId(),
-                        input.to(),
-                        input.from(),
-                        1L
-                ).successOrThrow();
-                this.create(this.chatGateway, chat);
+            } else {
+                assistant = this.assistantGateway.findById(instance.getAssistantID())
+                        .filter(it -> member.stream().anyMatch(m -> m.getOrganizationID().equals(it.getOrganizationID())))
+                        .orElseThrow(ExceptionUtils.notFound(instance.getAssistantID(), Assistant.class));
             }
+
+            chat = Chat.create(
+                    assistant.getOrganizationID(),
+                    assistant.getId(),
+                    instance.getId(),
+                    user.getId(),
+                    input.account(),
+                    1L
+            ).successOrThrow();
+            this.create(this.chatGateway, chat);
+        } else {
+            var incrementedChat = existingChat.get().incrementMessageCount().successOrThrow();
+            this.update(this.chatGateway, incrementedChat);
+
+            chat = incrementedChat;
         }
 
         var message = Message.create(

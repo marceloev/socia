@@ -71,6 +71,19 @@ public class Assistant extends Model<AssistantID> {
         ).validate();
     }
 
+    public static Result<Assistant> suggest (
+            final OrganizationID organizationID,
+            final Phone phone
+    ) {
+        return create(
+                organizationID,
+                phone,
+                AssistantProviderType.GEMINI,
+                "gemini-3-flash-preview",
+                "Feliz"
+        );
+    }
+
     public static @NonNull Assistant with (
             final AssistantID id,
             final Instant createdAt,

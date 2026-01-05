@@ -7,7 +7,6 @@ dependencies {
     jooqGenerator "org.jooq:jooq-meta:${jooqVer}"
     jooqGenerator "org.jooq:jooq:${jooqVer}"
 
-    jooqGenerator 'com.h2database:h2:2.2.224'
     jooqGenerator 'org.postgresql:postgresql'
 }
 

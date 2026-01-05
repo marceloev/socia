@@ -52,12 +52,13 @@ public class User extends Model<UserID> {
             final Phone phone
     ) {
         var now = now();
+        var id = UserID.generate(now);
         return new User(
                 UserID.generate(now),
                 now,
                 now,
                 "Desconhecido",
-                Email.of("email@gmail.com"),
+                Email.of(id.toString().concat("@gmail.com")),
                 IDUtils.generate().toString(),
                 phone,
                 PROSPECT

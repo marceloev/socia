@@ -54,7 +54,7 @@ public class SendMessageUseCaseImpl extends SendMessageUseCase {
                             this.instanceStrategy.send(instance, chat, messages);
                         })
                         .thenAccept(_ -> Streams.streamOf(messages)
-                                .map(Message::markAsFailed)
+                                .map(Message::markAsSent)
                                 .map(Result::successOrThrow)
                                 .forEach(message -> changeBus.add(this.messageGateway::update, message))
                         )
@@ -63,7 +63,7 @@ public class SendMessageUseCaseImpl extends SendMessageUseCase {
                             log.error("Error while trying to process messages from chat: {}", chatID, throwable);
 
                             Streams.streamOf(messages)
-                                    .map(Message::markAsSent)
+                                    .map(Message::markAsFailed)
                                     .map(Result::successOrThrow)
                                     .forEach(message -> changeBus.add(this.messageGateway::update, message));
 

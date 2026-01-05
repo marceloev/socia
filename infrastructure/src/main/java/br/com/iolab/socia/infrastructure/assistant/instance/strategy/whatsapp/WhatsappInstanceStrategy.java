@@ -31,7 +31,7 @@ public class WhatsappInstanceStrategy implements InstanceStrategy {
         messages.forEach(message -> this.whatsappClient.send(
                 instance.getId().toString(),
                 SendWhatsappMessageRequest.with(
-                        instance.getAccount(),
+                        chat.getAccount().value(),
                         message.getContent().value()
                 )
         ));

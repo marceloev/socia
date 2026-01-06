@@ -13,7 +13,7 @@ import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.infrastructure.assistant.persistence.AssistantPromptProvider;
-import br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output;
+import br.com.iolab.socia.infrastructure.chat.message.strategy.schema.Output;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.Blob;
 import com.google.cloud.vertexai.api.Content;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 import static br.com.iolab.socia.domain.chat.message.types.MessageRoleType.ASSISTANT;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.COMPLETED;
-import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.Output.schema;
+import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema.GeminiOutputSchema.schema;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.util.GeminiUtil.mimeType;
 import static br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.util.GeminiUtil.role;
 import static com.google.cloud.vertexai.api.FunctionCallingConfig.Mode.AUTO;

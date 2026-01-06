@@ -1,23 +1,15 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini.schema;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.vertexai.api.Schema;
 import com.google.cloud.vertexai.api.Type;
 
 import java.util.List;
 import java.util.Map;
 
-public record Output(
-        @JsonProperty("mode") String mode,
-        @JsonProperty("message") String message,
-        @JsonProperty("knowledge_ops") List<KnowledgeOp> knowledgeOps,
-        @JsonProperty("task_ops") List<TaskOp> taskOps,
-        @JsonProperty("escalate") Escalate escalate
-) {
+public final class GeminiOutputSchema {
     private static final Schema SCHEMA;
 
     static {
-        // ----- enums -----
         var modeSchema = Schema.newBuilder()
                 .setDescription("Modo da resposta. Obrigatório no root.")
                 .setType(Type.STRING)
@@ -31,7 +23,6 @@ public record Output(
                 .setNullable(false)
                 .build();
 
-        // ----- knowledge_ops -----
         var knowledgeOpSchema = Schema.newBuilder()
                 .setDescription("Operação de memória. Não use para senhas/tokens/credenciais.")
                 .setType(Type.OBJECT)
@@ -85,7 +76,6 @@ public record Output(
                 .setItems(knowledgeOpSchema)
                 .build();
 
-        // ----- task_ops -----
         var taskContextSchema = Schema.newBuilder()
                 .setType(Type.OBJECT)
                 .setNullable(false)
@@ -172,7 +162,6 @@ public record Output(
                 .setItems(taskOpSchema)
                 .build();
 
-        // ----- escalate -----
         var escalateSchema = Schema.newBuilder()
                 .setDescription("Escalada para humano quando necessário.")
                 .setType(Type.OBJECT)
@@ -192,7 +181,6 @@ public record Output(
                 .addAllRequired(List.of("reason", "message"))
                 .build();
 
-        // ----- root -----
         SCHEMA = Schema.newBuilder()
                 .setTitle("Output")
                 .setType(Type.OBJECT)
@@ -207,50 +195,10 @@ public record Output(
                 .build();
     }
 
+    private GeminiOutputSchema () {
+    }
+
     public static Schema schema() {
         return SCHEMA;
     }
-
-    public static Output empty() {
-        return new Output(
-                "ESCALATE",
-                "Tive um problema para estruturar a resposta agora. Me diz de novo, em uma frase, o que você precisa.",
-                List.of(),
-                List.of(),
-                new Escalate("OUTPUT_ERROR", "Falha ao gerar/validar JSON no schema esperado.")
-        );
-    }
-
-    public record KnowledgeOp(
-            @JsonProperty("op") String op,
-            @JsonProperty("key") String key,
-            @JsonProperty("value") String value,
-            @JsonProperty("sensitivity") String sensitivity,
-            @JsonProperty("confidence") Double confidence,
-            @JsonProperty("ttl_days") Integer ttlDays,
-            @JsonProperty("rationale") String rationale
-    ) {}
-
-    public record TaskOp(
-            @JsonProperty("op") String op,
-            @JsonProperty("task_key") String taskKey,
-            @JsonProperty("task_id") String taskId,
-            @JsonProperty("title") String title,
-            @JsonProperty("owner") String owner,
-            @JsonProperty("due") String due,
-            @JsonProperty("priority") String priority,
-            @JsonProperty("context") TaskContext context,
-            @JsonProperty("confidence") Double confidence
-    ) {}
-
-    public record TaskContext(
-            @JsonProperty("why") String why,
-            @JsonProperty("definition_of_done") String definitionOfDone,
-            @JsonProperty("dependencies") List<String> dependencies
-    ) {}
-
-    public record Escalate(
-            @JsonProperty("reason") String reason,
-            @JsonProperty("message") String message
-    ) {}
 }

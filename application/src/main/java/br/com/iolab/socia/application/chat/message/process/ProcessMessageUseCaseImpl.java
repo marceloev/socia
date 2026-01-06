@@ -3,7 +3,6 @@ package br.com.iolab.socia.application.chat.message.process;
 import br.com.iolab.commons.domain.validation.Result;
 import br.com.iolab.commons.types.Streams;
 import br.com.iolab.socia.application.chat.message.perform.PerformMessageUseCase;
-import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
 import br.com.iolab.socia.domain.chat.message.valueobject.ReservationPolicy;
@@ -22,7 +21,6 @@ import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.REC
 @RequiredArgsConstructor
 public class ProcessMessageUseCaseImpl extends ProcessMessageUseCase {
     private final MessageGateway messageGateway;
-    private final AssistantGateway assistantGateway;
     private final PerformMessageUseCase performMessageUseCase;
 
     @Override

@@ -17,7 +17,7 @@ import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
 import br.com.iolab.socia.domain.assistant.instance.InstanceStrategy;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
-import br.com.iolab.socia.domain.chat.message.MessageStrategy;
+import br.com.iolab.socia.domain.chat.message.strategy.MessageStrategy;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.member.MemberGateway;
 import br.com.iolab.socia.domain.organization.OrganizationGateway;

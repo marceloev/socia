@@ -1,14 +1,14 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini;
 
 import br.com.iolab.commons.domain.exceptions.InternalErrorException;
-import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.json.Json;
 import br.com.iolab.socia.domain.assistant.Assistant;
+import br.com.iolab.socia.domain.assistant.knowledge.Knowledge;
 import br.com.iolab.socia.domain.chat.Chat;
-import br.com.iolab.socia.domain.chat.ChatID;
 import br.com.iolab.socia.domain.chat.message.Message;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
-import br.com.iolab.socia.domain.chat.message.MessageStrategy;
+import br.com.iolab.socia.domain.chat.message.MessageID;
+import br.com.iolab.socia.domain.chat.message.strategy.MessageStrategy;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
@@ -34,9 +34,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static br.com.iolab.socia.domain.chat.message.types.MessageRoleType.ASSISTANT;
 import static br.com.iolab.socia.domain.chat.message.types.MessageStatusType.COMPLETED;
@@ -63,9 +63,16 @@ public class GeminiMessageStrategy implements MessageStrategy {
     private final List<SafetySetting> safetySettings;
 
     @Override
-    public @NonNull Message perform (
+    public @NonNull WithAssistant withChat (@NonNull final Chat chat) {
+        return assistant -> history -> resources -> knowledge -> perform(chat, assistant, history, resources, knowledge);
+    }
+
+    private @NonNull Message perform (
+            @NonNull final Chat chat,
             @NonNull final Assistant assistant,
-            @NonNull final Chat chat
+            @NonNull final List<Message> history,
+            @NonNull final Map<MessageID, List<MessageResource>> resources,
+            @NonNull final List<Knowledge> knowledge
     ) {
         try {
             var model = new GenerativeModel.Builder()
@@ -90,8 +97,8 @@ public class GeminiMessageStrategy implements MessageStrategy {
                             .build()
                     ).build();
 
-            var history = findChatHistory(chat.getId());
-            var response = model.generateContent(history);
+            var historyContent = buildHistoryContent(history, resources);
+            var response = model.generateContent(historyContent);
 
             var turnCounter = new AtomicInteger(0);
             var functionCalls = ResponseHandler.getFunctionCalls(response);
@@ -140,14 +147,11 @@ public class GeminiMessageStrategy implements MessageStrategy {
         }
     }
 
-    private @NonNull List<Content> findChatHistory (@NonNull final ChatID chatID) {
-        var messages = this.messageGateway.findAllByChatID(chatID);
-        var messageIds = messages.stream().map(Model::getId).collect(Collectors.toSet());
-
-        var resourcesByMessage = this.messageResourceGateway.findAllByMessageIdIn(messageIds).stream()
-                .collect(Collectors.groupingBy(MessageResource::getMessageID));
-
-        return this.messageGateway.findAllByChatID(chatID).stream()
+    private @NonNull List<Content> buildHistoryContent (
+            @NonNull final List<Message> messages,
+            @NonNull final Map<MessageID, List<MessageResource>> resourcesByMessage
+    ) {
+        return messages.stream()
                 .flatMap(message -> {
                     var contents = new ArrayList<Content>();
 

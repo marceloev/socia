@@ -1,6 +1,5 @@
 package br.com.iolab.socia.infrastructure.assistant.knowledge.persistence;
 
-import br.com.iolab.commons.domain.pagination.Pagination;
 import br.com.iolab.commons.infrastructure.persistence.BasicModelGateway;
 import br.com.iolab.infrastructure.jooq.generated.tables.records.KnowledgeRecord;
 import br.com.iolab.socia.domain.assistant.AssistantID;
@@ -14,15 +13,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static br.com.iolab.infrastructure.jooq.generated.tables.Knowledge.KNOWLEDGE;
-import static java.util.Objects.nonNull;
 
 @Repository
 public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, KnowledgeID, KnowledgeRecord> implements KnowledgeGateway {
-    protected KnowledgeGatewayImpl(
+    protected KnowledgeGatewayImpl (
             final DSLContext readOnlyDSLContext,
             final DSLContext writeOnlyDSLContext,
             final KnowledgeMapperImpl knowledgeMapper
@@ -38,7 +35,7 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
     }
 
     @Override
-    public @NonNull List<Knowledge> findByAssistant(@NonNull final AssistantID assistantID) {
+    public @NonNull List<Knowledge> findByAssistant (@NonNull final AssistantID assistantID) {
         return this.readOnlyDSLContext
                 .selectFrom(KNOWLEDGE)
                 .where(KNOWLEDGE.ASSISTANT_ID.eq(assistantID.value()))
@@ -49,7 +46,7 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
     }
 
     @Override
-    public @NonNull Optional<Knowledge> findByKey(@NonNull final AssistantID assistantID, @NonNull final KnowledgeKey key) {
+    public @NonNull Optional<Knowledge> findByKey (@NonNull final AssistantID assistantID, @NonNull final KnowledgeKey key) {
         return this.readOnlyDSLContext
                 .selectFrom(KNOWLEDGE)
                 .where(KNOWLEDGE.ASSISTANT_ID.eq(assistantID.value()))
@@ -60,7 +57,7 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
     }
 
     @Override
-    public void deleteExpired() {
+    public void deleteExpired () {
         this.writeOnlyDSLContext
                 .deleteFrom(KNOWLEDGE)
                 .where(KNOWLEDGE.EXPIRES_AT.isNotNull())

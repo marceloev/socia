@@ -46,7 +46,7 @@ logging:
 socia:
   assistant:
     gemini:
-      project-id: ${GEMINI_PROJECT_ID:zydon-platform}
+      project-id: ${GEMINI_PROJECT_ID}
       location: ${GEMINI_LOCATION:us-central1}
       credentials: ${GOOGLE_GEMINI_CREDENTIALS}
       timeout-minutes: ${GEMINI_TIMEOUT_MINUTES:5}

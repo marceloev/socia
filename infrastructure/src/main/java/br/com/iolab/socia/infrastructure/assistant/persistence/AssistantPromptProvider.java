@@ -1,6 +1,7 @@
 package br.com.iolab.socia.infrastructure.assistant.persistence;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -20,23 +21,34 @@ public class AssistantPromptProvider {
     @Getter
     private Prompt prompt;
 
-
     @PostConstruct
-    protected void loadPrompts() {
+    protected void loadPrompts () {
         try {
-            Resource resource = this.resourceLoader.getResource("classpath:prompt/core.md");
+            var corePrompt = loadPromptFile("classpath:prompt/core.md");
+            var instagramPrompt = loadPromptFile("classpath:prompt/instagram.md");
+            var whatsappPrompt = loadPromptFile("classpath:prompt/whatsapp.md");
 
-            var corePrompt = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            log.info("Core prompt carregado com sucesso ({} caracteres)", corePrompt.length());
+            log.info("Prompts carregados com sucesso - Core: {} chars, Instagram: {} chars, WhatsApp: {} chars",
+                    corePrompt.length(),
+                    instagramPrompt.length(),
+                    whatsappPrompt.length()
+            );
 
-            this.prompt = new Prompt(corePrompt);
+            this.prompt = new Prompt(corePrompt, instagramPrompt, whatsappPrompt);
         } catch (IOException e) {
             throw new IllegalStateException("Falha ao carregar prompts", e);
         }
     }
 
+    private @NonNull String loadPromptFile (@NonNull final String path) throws IOException {
+        Resource resource = this.resourceLoader.getResource(path);
+        return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
     public record Prompt(
-            String core
+            String core,
+            String instagram,
+            String whatsapp
     ) {
     }
 }

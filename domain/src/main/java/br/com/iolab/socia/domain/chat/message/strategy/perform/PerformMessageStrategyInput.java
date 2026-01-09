@@ -1,6 +1,7 @@
 package br.com.iolab.socia.domain.chat.message.strategy.perform;
 
 import br.com.iolab.socia.domain.assistant.Assistant;
+import br.com.iolab.socia.domain.assistant.instance.Instance;
 import br.com.iolab.socia.domain.assistant.knowledge.Knowledge;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.message.Message;
@@ -17,13 +18,15 @@ import java.util.Map;
 @ToString
 public class PerformMessageStrategyInput {
     private final Chat chat;
+    private final Instance instance;
     private final Assistant assistant;
     private final List<Message> history;
     private final Map<MessageID, List<MessageResource>> resources;
     private final List<Knowledge> knowledge;
 
-    private PerformMessageStrategyInput (@NonNull Builder builder) {
+    private PerformMessageStrategyInput (@NonNull final Builder builder) {
         this.chat = builder.chat;
+        this.instance = builder.instance;
         this.assistant = builder.assistant;
         this.history = builder.history;
         this.resources = builder.resources;
@@ -35,7 +38,11 @@ public class PerformMessageStrategyInput {
     }
 
     public interface ChatStep {
-        AssistantStep chat (@NonNull Chat chat);
+         InstanceStep chat (@NonNull Chat chat);
+    }
+
+    public interface InstanceStep {
+        AssistantStep instance (@NonNull Instance instance);
     }
 
     public interface AssistantStep {
@@ -58,22 +65,29 @@ public class PerformMessageStrategyInput {
         PerformMessageStrategyInput build ();
     }
 
-    public static class Builder implements ChatStep, AssistantStep, HistoryStep, ResourceStep, KnowledgeStep, FinishedStep {
+    public static class Builder implements ChatStep, InstanceStep, AssistantStep, HistoryStep, ResourceStep, KnowledgeStep, FinishedStep {
         private Chat chat;
+        private Instance instance;
         private Assistant assistant;
         private List<Message> history;
         private Map<MessageID, List<MessageResource>> resources;
         private List<Knowledge> knowledge;
 
         @Override
-        public AssistantStep chat (@NonNull final Chat chat) {
+        public HistoryStep assistant (@NonNull final Assistant assistant) {
+            this.assistant = assistant;
+            return this;
+        }
+
+        @Override
+        public InstanceStep chat (@NonNull final Chat chat) {
             this.chat = chat;
             return this;
         }
 
         @Override
-        public HistoryStep assistant (@NonNull final Assistant assistant) {
-            this.assistant = assistant;
+        public AssistantStep instance (@NonNull final Instance instance) {
+            this.instance = instance;
             return this;
         }
 

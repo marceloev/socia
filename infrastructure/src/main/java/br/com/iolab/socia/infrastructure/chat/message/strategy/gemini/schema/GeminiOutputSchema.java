@@ -24,7 +24,7 @@ public final class GeminiOutputSchema {
                 .build();
 
         var messageSchema = Schema.newBuilder()
-                .setDescription("Mensagem(ns) a ser(em) retornada(s) para o usuário.")
+                .setDescription("Mensagem(ns) a ser(em) retornada(s) para o usuário, só separe-as se realmente fizer sentido envios separados e se forem de assuntos distintos, caso contrário, agrupe-as.")
                 .setType(Type.ARRAY)
                 .setNullable(false)
                 .setItems(messagesSchema)

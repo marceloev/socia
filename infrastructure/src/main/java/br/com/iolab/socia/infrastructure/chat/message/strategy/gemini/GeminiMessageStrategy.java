@@ -1,6 +1,7 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini;
 
 import br.com.iolab.commons.domain.exceptions.InternalErrorException;
+import br.com.iolab.commons.domain.utils.StringUtils;
 import br.com.iolab.commons.domain.validation.Result;
 import br.com.iolab.commons.json.Json;
 import br.com.iolab.commons.types.Streams;
@@ -224,16 +225,27 @@ public class GeminiMessageStrategy implements MessageStrategy {
     private List<Part> getAllPrompts (@NonNull final PerformMessageStrategyInput input) {
         var parts = new ArrayList<Part>();
 
-        parts.add(Part.newBuilder()
-                .setText(input.getAssistant().getPrompt())
-                .build()
-        );
+        var assistantPrompt = input.getAssistant().getPrompt();
+        if (StringUtils.isNotEmpty(assistantPrompt)) {
+            parts.add(Part.newBuilder()
+                    .setText(assistantPrompt)
+                    .build()
+            );
+        }
 
         var prompts = this.assistantPromptProvider.getPrompt();
         parts.add(Part.newBuilder()
                 .setText(prompts.core())
                 .build()
         );
+
+        var instanceOrigin = input.getInstance().getOrigin();
+        switch (instanceOrigin) {
+            case WHATSAPP -> parts.add(Part.newBuilder()
+                    .setText(prompts.whatsapp())
+                    .build()
+            );
+        }
 
         if (!input.getKnowledge().isEmpty()) {
             parts.add(Part.newBuilder()

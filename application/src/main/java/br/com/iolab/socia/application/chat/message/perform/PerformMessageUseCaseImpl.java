@@ -4,6 +4,8 @@ import br.com.iolab.commons.domain.model.Model;
 import br.com.iolab.commons.domain.utils.ExceptionUtils;
 import br.com.iolab.socia.domain.assistant.Assistant;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
+import br.com.iolab.socia.domain.assistant.instance.Instance;
+import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
 import br.com.iolab.socia.domain.assistant.knowledge.KnowledgeGateway;
 import br.com.iolab.socia.domain.chat.Chat;
 import br.com.iolab.socia.domain.chat.ChatGateway;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
     private final ChatGateway chatGateway;
+    private final InstanceGateway instanceGateway;
     private final AssistantGateway assistantGateway;
     private final KnowledgeGateway knowledgeGateway;
 
@@ -31,6 +34,9 @@ public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
     protected void perform (@NonNull final PerformMessageUseCase.Input input) {
         var chat = this.chatGateway.findById(input.chatID())
                 .orElseThrow(ExceptionUtils.notFound(input.chatID(), Chat.class));
+
+        var instance = this.instanceGateway.findById(chat.getInstanceID())
+                .orElseThrow(ExceptionUtils.notFound(chat.getInstanceID(), Instance.class));
 
         var assistant = this.assistantGateway.findById(chat.getAssistantID())
                 .orElseThrow(ExceptionUtils.notFound(chat.getAssistantID(), Assistant.class));
@@ -45,6 +51,7 @@ public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
 
         var performed = this.messageStrategy.perform(PerformMessageStrategyInput.builder()
                 .chat(chat)
+                .instance(instance)
                 .assistant(assistant)
                 .history(history)
                 .resource(resources)

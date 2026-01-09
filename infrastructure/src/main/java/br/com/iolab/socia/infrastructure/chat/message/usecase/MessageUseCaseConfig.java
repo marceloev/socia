@@ -69,6 +69,7 @@ public class MessageUseCaseConfig {
     protected PerformMessageUseCase performMessageUseCase () {
         return new PerformMessageUseCaseImpl(
                 chatGateway,
+                instanceGateway,
                 assistantGateway,
                 knowledgeGateway,
                 messageGateway,

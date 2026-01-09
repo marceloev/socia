@@ -109,9 +109,9 @@ public class Chat extends Model<ChatID> {
         return result.build();
     }
 
-    public Result<Chat> incrementMessageCount () {
+    public Result<Chat> incrementMessageCount (int count) {
         return this.toBuilder()
-                .count(getCount() + 1)
+                .count(getCount() + count)
                 .build()
                 .validate();
     }

@@ -12,12 +12,12 @@ import java.util.List;
 @Getter
 @ToString
 public class PerformMessageStrategyOutput {
-    private final Message message;
+    private final List<Message> messages;
     private final List<MessageResource> resources;
     private final List<Knowledge> knowledges;
 
     private PerformMessageStrategyOutput (@NonNull final Builder builder) {
-        this.message = builder.message;
+        this.messages = builder.messages;
         this.resources = builder.resources;
         this.knowledges = builder.knowledges;
     }
@@ -27,7 +27,7 @@ public class PerformMessageStrategyOutput {
     }
 
     public interface MessageStep {
-        ResourcesStep message (@NonNull Message message);
+        ResourcesStep message (@NonNull List<Message> messages);
     }
 
     public interface ResourcesStep {
@@ -43,13 +43,13 @@ public class PerformMessageStrategyOutput {
     }
 
     public static class Builder implements MessageStep, ResourcesStep, KnowledgeStep, FinishedStep {
-        private Message message;
+        private List<Message> messages;
         private List<MessageResource> resources;
         private List<Knowledge> knowledges;
 
         @Override
-        public ResourcesStep message (@NonNull final Message message) {
-            this.message = message;
+        public ResourcesStep message (@NonNull final List<Message> messages) {
+            this.messages = messages;
             return this;
         }
 

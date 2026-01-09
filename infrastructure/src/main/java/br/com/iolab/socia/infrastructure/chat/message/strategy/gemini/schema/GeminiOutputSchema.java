@@ -17,10 +17,17 @@ public final class GeminiOutputSchema {
                 .addAllEnum(List.of("ANSWER", "CLARIFY", "PLAN", "LOOKUP", "TASK_INTENT", "ESCALATE"))
                 .build();
 
-        var messageSchema = Schema.newBuilder()
+        var messagesSchema = Schema.newBuilder()
                 .setDescription("Mensagem final para o usuário. Direta, sem rascunhos.")
                 .setType(Type.STRING)
                 .setNullable(false)
+                .build();
+
+        var messageSchema = Schema.newBuilder()
+                .setDescription("Mensagem(ns) a ser(em) retornada(s) para o usuário.")
+                .setType(Type.ARRAY)
+                .setNullable(false)
+                .setItems(messagesSchema)
                 .build();
 
         var knowledgeOpSchema = Schema.newBuilder()
@@ -186,12 +193,12 @@ public final class GeminiOutputSchema {
                 .setType(Type.OBJECT)
                 .putAllProperties(Map.of(
                         "mode", modeSchema,
-                        "message", messageSchema,
+                        "messages", messageSchema,
                         "knowledge_ops", knowledgeOpsSchema,
                         "task_ops", taskOpsSchema,
                         "escalate", escalateSchema
                 ))
-                .addAllRequired(List.of("mode", "message", "knowledge_ops", "task_ops"))
+                .addAllRequired(List.of("mode", "messages", "knowledge_ops", "task_ops"))
                 .build();
     }
 

@@ -109,7 +109,9 @@ public class CreateMessageUseCaseImpl extends CreateMessageUseCase {
             ).successOrThrow();
             this.create(this.chatGateway, chat);
         } else {
-            var incrementedChat = existingChat.get().incrementMessageCount().successOrThrow();
+            var incrementedChat = existingChat.get().incrementMessageCount(
+                    1
+            ).successOrThrow();
             this.update(this.chatGateway, incrementedChat);
 
             chat = incrementedChat;

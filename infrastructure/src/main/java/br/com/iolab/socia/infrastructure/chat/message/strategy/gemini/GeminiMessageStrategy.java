@@ -115,13 +115,17 @@ public class GeminiMessageStrategy implements MessageStrategy {
             }
 
             return PerformMessageStrategyOutput.builder()
-                    .message(Message.create(
-                            input.getChat().getId(),
-                            COMPLETED,
-                            ASSISTANT,
-                            MessageContent.of(output.message()),
-                            Collections.emptyMap()
-                    ).successOrThrow())
+                    .message(Streams.streamOf(output.messages())
+                            .map(message -> Message.create(
+                                    input.getChat().getId(),
+                                    COMPLETED,
+                                    ASSISTANT,
+                                    MessageContent.of(message),
+                                    Collections.emptyMap()
+                            ))
+                            .map(Result::successOrThrow)
+                            .toList()
+                    )
                     .resources(Collections.emptyList())
                     .knowledge(Streams.streamOf(output.knowledgeOps())
                             .map(knowledgeOp -> Knowledge.create(
@@ -143,13 +147,13 @@ public class GeminiMessageStrategy implements MessageStrategy {
             log.error("Error while trying to process chat: {}", input.getChat().getId(), ex);
 
             return PerformMessageStrategyOutput.builder()
-                    .message(Message.create(
+                    .message(Collections.singletonList(Message.create(
                             input.getChat().getId(),
                             COMPLETED,
                             ASSISTANT,
                             MessageContent.of("Não foi possível concluir a requisição, por favor, contate o suporte!"),
                             Collections.emptyMap()
-                    ).successOrThrow())
+                    ).successOrThrow()))
                     .resources(Collections.emptyList())
                     .knowledge(Collections.emptyList())
                     .build();
@@ -251,11 +255,11 @@ public class GeminiMessageStrategy implements MessageStrategy {
             context.append("**Value:** ").append(knowledge.getValue().value()).append("\n");
             context.append("**Confidence:** ").append(String.format("%.2f", knowledge.getConfidence())).append("\n");
             context.append("**Sensitivity:** ").append(knowledge.getKnowledgeSensitivity().name()).append("\n");
-            
+
             if (knowledge.getTtlDays() != null) {
                 context.append("**TTL:** ").append(knowledge.getTtlDays()).append(" days\n");
             }
-            
+
             context.append("**Rationale:** ").append(knowledge.getRationale().value()).append("\n");
             context.append("\n");
         });

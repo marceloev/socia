@@ -133,7 +133,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
                                     KnowledgeValue.of(knowledgeOp.value()),
                                     knowledgeOp.sensitivity(),
                                     knowledgeOp.confidence(),
-                                    knowledgeOp.ttlDays(),
+                                    (knowledgeOp.ttlDays() == 0 ? null : knowledgeOp.ttlDays()),
                                     KnowledgeRationale.of(knowledgeOp.rationale())
                             ))
                             .map(Result::successOrThrow)

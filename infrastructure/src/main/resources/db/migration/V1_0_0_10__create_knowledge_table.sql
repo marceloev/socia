@@ -19,10 +19,10 @@ CREATE TABLE knowledge (
 CREATE INDEX idx_knowledge_assistant ON knowledge(assistant_id);
 
 CREATE UNIQUE INDEX idx_knowledge_assistant_key_unique ON knowledge(assistant_id, key) 
-WHERE expires_at IS NULL OR expires_at > NOW();
+WHERE expires_at IS NULL;
 
 CREATE INDEX idx_knowledge_expired ON knowledge(expires_at) 
-WHERE expires_at IS NOT NULL AND expires_at <= NOW();
+WHERE expires_at IS NOT NULL;
 
 COMMENT ON TABLE knowledge IS 'Knowledge learned by assistants';
 COMMENT ON COLUMN knowledge.assistant_id IS 'Assistant that owns the knowledge';

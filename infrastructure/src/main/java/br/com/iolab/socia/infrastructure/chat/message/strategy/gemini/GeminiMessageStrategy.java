@@ -1,16 +1,17 @@
 package br.com.iolab.socia.infrastructure.chat.message.strategy.gemini;
 
 import br.com.iolab.commons.domain.exceptions.InternalErrorException;
+import br.com.iolab.commons.domain.validation.Result;
 import br.com.iolab.commons.json.Json;
-import br.com.iolab.socia.domain.assistant.Assistant;
+import br.com.iolab.commons.types.Streams;
 import br.com.iolab.socia.domain.assistant.knowledge.Knowledge;
-import br.com.iolab.socia.domain.chat.Chat;
+import br.com.iolab.socia.domain.assistant.knowledge.fields.KnowledgeKey;
+import br.com.iolab.socia.domain.assistant.knowledge.fields.KnowledgeRationale;
+import br.com.iolab.socia.domain.assistant.knowledge.fields.KnowledgeValue;
 import br.com.iolab.socia.domain.chat.message.Message;
-import br.com.iolab.socia.domain.chat.message.MessageGateway;
-import br.com.iolab.socia.domain.chat.message.MessageID;
 import br.com.iolab.socia.domain.chat.message.strategy.MessageStrategy;
-import br.com.iolab.socia.domain.chat.message.resource.MessageResource;
-import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
+import br.com.iolab.socia.domain.chat.message.strategy.perform.PerformMessageStrategyInput;
+import br.com.iolab.socia.domain.chat.message.strategy.perform.PerformMessageStrategyOutput;
 import br.com.iolab.socia.domain.chat.message.types.MessageContent;
 import br.com.iolab.socia.infrastructure.assistant.persistence.AssistantPromptProvider;
 import br.com.iolab.socia.infrastructure.chat.message.strategy.schema.Output;
@@ -34,7 +35,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,32 +55,19 @@ public class GeminiMessageStrategy implements MessageStrategy {
     private static final JsonFormat.Printer DEFAULT_JSON_PRINTER = JsonFormat.printer();
     private static final JsonFormat.Parser DEFAULT_JSON_PARSER = JsonFormat.parser();
 
-    private final MessageGateway messageGateway;
-    private final MessageResourceGateway messageResourceGateway;
-    private final AssistantPromptProvider assistantPromptProvider;
-
     private final VertexAI vertexAI;
     private final List<SafetySetting> safetySettings;
+    private final AssistantPromptProvider assistantPromptProvider;
 
     @Override
-    public @NonNull WithAssistant withChat (@NonNull final Chat chat) {
-        return assistant -> history -> resources -> knowledge -> perform(chat, assistant, history, resources, knowledge);
-    }
-
-    private @NonNull Message perform (
-            @NonNull final Chat chat,
-            @NonNull final Assistant assistant,
-            @NonNull final List<Message> history,
-            @NonNull final Map<MessageID, List<MessageResource>> resources,
-            @NonNull final List<Knowledge> knowledge
-    ) {
+    public @NonNull PerformMessageStrategyOutput perform (@NonNull final PerformMessageStrategyInput input) {
         try {
             var model = new GenerativeModel.Builder()
                     .setVertexAi(vertexAI)
-                    .setModelName(assistant.getVersion())
+                    .setModelName(input.getAssistant().getVersion())
                     .setSafetySettings(safetySettings)
                     .setSystemInstruction(Content.newBuilder()
-                                    .addAllParts(getAllPrompts(assistant))
+                                    .addAllParts(getAllPrompts(input))
                                     .build()
                 /*).setTools(Collections.singletonList(Tool.newBuilder()
                         .addAllFunctionDeclarations(Collections.emptyList())
@@ -97,7 +84,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
                             .build()
                     ).build();
 
-            var historyContent = buildHistoryContent(history, resources);
+            var historyContent = buildHistoryContent(input);
             var response = model.generateContent(historyContent);
 
             var turnCounter = new AtomicInteger(0);
@@ -127,31 +114,50 @@ public class GeminiMessageStrategy implements MessageStrategy {
                 output = Output.empty();
             }
 
-            return Message.create(
-                    chat.getId(),
-                    COMPLETED,
-                    ASSISTANT,
-                    MessageContent.of(output.message()),
-                    Collections.emptyMap()
-            ).successOrThrow();
+            return PerformMessageStrategyOutput.builder()
+                    .message(Message.create(
+                            input.getChat().getId(),
+                            COMPLETED,
+                            ASSISTANT,
+                            MessageContent.of(output.message()),
+                            Collections.emptyMap()
+                    ).successOrThrow())
+                    .resources(Collections.emptyList())
+                    .knowledge(Streams.streamOf(output.knowledgeOps())
+                            .map(knowledgeOp -> Knowledge.create(
+                                    input.getAssistant().getId(),
+                                    input.getAssistant().getOrganizationID(),
+                                    input.getChat().getUserID(),
+                                    input.getChat().getId(),
+                                    KnowledgeKey.of(knowledgeOp.key()),
+                                    KnowledgeValue.of(knowledgeOp.value()),
+                                    knowledgeOp.sensitivity(),
+                                    knowledgeOp.confidence(),
+                                    knowledgeOp.ttlDays(),
+                                    KnowledgeRationale.of(knowledgeOp.rationale())
+                            ))
+                            .map(Result::successOrThrow)
+                            .toList()
+                    ).build();
         } catch (Exception ex) {
-            log.error("Error while trying to process chat: {}", chat.getId(), ex);
+            log.error("Error while trying to process chat: {}", input.getChat().getId(), ex);
 
-            return Message.create(
-                    chat.getId(),
-                    COMPLETED,
-                    ASSISTANT,
-                    MessageContent.of("Não foi possível concluir a requisição, por favor, contate o suporte!"),
-                    Collections.emptyMap()
-            ).successOrThrow();
+            return PerformMessageStrategyOutput.builder()
+                    .message(Message.create(
+                            input.getChat().getId(),
+                            COMPLETED,
+                            ASSISTANT,
+                            MessageContent.of("Não foi possível concluir a requisição, por favor, contate o suporte!"),
+                            Collections.emptyMap()
+                    ).successOrThrow())
+                    .resources(Collections.emptyList())
+                    .knowledge(Collections.emptyList())
+                    .build();
         }
     }
 
-    private @NonNull List<Content> buildHistoryContent (
-            @NonNull final List<Message> messages,
-            @NonNull final Map<MessageID, List<MessageResource>> resourcesByMessage
-    ) {
-        return messages.stream()
+    private @NonNull List<Content> buildHistoryContent (@NonNull final PerformMessageStrategyInput input) {
+        return input.getHistory().stream()
                 .flatMap(message -> {
                     var contents = new ArrayList<Content>();
 
@@ -190,7 +196,7 @@ public class GeminiMessageStrategy implements MessageStrategy {
                         );
                     }
 
-                    Optional.ofNullable(resourcesByMessage.get(message.getId()))
+                    Optional.ofNullable(input.getResources().get(message.getId()))
                             .ifPresent(resources -> {
                                 resources.forEach(resource ->
                                         parts.add(Part.newBuilder()
@@ -211,11 +217,11 @@ public class GeminiMessageStrategy implements MessageStrategy {
                 }).toList().reversed();
     }
 
-    private List<Part> getAllPrompts (@NonNull final Assistant assistant) {
+    private List<Part> getAllPrompts (@NonNull final PerformMessageStrategyInput input) {
         var parts = new ArrayList<Part>();
 
         parts.add(Part.newBuilder()
-                .setText(assistant.getPrompt())
+                .setText(input.getAssistant().getPrompt())
                 .build()
         );
 

@@ -15,10 +15,11 @@ import br.com.iolab.socia.application.chat.message.send.SendMessageUseCaseImpl;
 import br.com.iolab.socia.domain.assistant.AssistantGateway;
 import br.com.iolab.socia.domain.assistant.instance.InstanceGateway;
 import br.com.iolab.socia.domain.assistant.instance.InstanceStrategy;
+import br.com.iolab.socia.domain.assistant.knowledge.KnowledgeGateway;
 import br.com.iolab.socia.domain.chat.ChatGateway;
 import br.com.iolab.socia.domain.chat.message.MessageGateway;
-import br.com.iolab.socia.domain.chat.message.strategy.MessageStrategy;
 import br.com.iolab.socia.domain.chat.message.resource.MessageResourceGateway;
+import br.com.iolab.socia.domain.chat.message.strategy.MessageStrategy;
 import br.com.iolab.socia.domain.member.MemberGateway;
 import br.com.iolab.socia.domain.organization.OrganizationGateway;
 import br.com.iolab.socia.domain.user.UserGateway;
@@ -34,6 +35,7 @@ public class MessageUseCaseConfig {
     private final OrganizationGateway organizationGateway;
 
     private final AssistantGateway assistantGateway;
+    private final KnowledgeGateway knowledgeGateway;
     private final InstanceGateway instanceGateway;
     private final InstanceStrategy instanceStrategy;
 
@@ -66,9 +68,11 @@ public class MessageUseCaseConfig {
     @Bean
     protected PerformMessageUseCase performMessageUseCase () {
         return new PerformMessageUseCaseImpl(
-                messageGateway,
                 chatGateway,
                 assistantGateway,
+                knowledgeGateway,
+                messageGateway,
+                messageResourceGateway,
                 messageStrategy
         );
     }
@@ -77,7 +81,6 @@ public class MessageUseCaseConfig {
     protected ProcessMessageUseCase processMessageUseCase (final PerformMessageUseCase performMessageUseCase) {
         return new ProcessMessageUseCaseImpl(
                 messageGateway,
-                assistantGateway,
                 performMessageUseCase
         );
     }

@@ -45,10 +45,10 @@ public final class GeminiOutputSchema {
                                 .setNullable(false)
                                 .build(),
                         "sensitivity", Schema.newBuilder()
-                                .setDescription("LOW, MEDIUM, HIGH.")
+                                .setDescription("PUBLIC, PRIVATE, CONFIDENTIAL.")
                                 .setType(Type.STRING)
                                 .setNullable(false)
-                                .addAllEnum(List.of("LOW", "MEDIUM", "HIGH"))
+                                .addAllEnum(List.of("PUBLIC", "PRIVATE", "CONFIDENTIAL"))
                                 .build(),
                         "confidence", Schema.newBuilder()
                                 .setDescription("0.0 a 1.0. Use alto apenas quando for estável e explícito.")

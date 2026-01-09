@@ -54,7 +54,7 @@ public class KnowledgeMapperImpl extends ModelMapper<Knowledge, KnowledgeRecord>
                 mapNullable(knowledgeRecord.getChatId(), ChatID::from),
                 mapNullable(knowledgeRecord.getKey(), KnowledgeKey::of),
                 mapNullable(knowledgeRecord.getValue(), KnowledgeValue::of),
-                mapNullable(knowledgeRecord.getSensitivity(), KnowledgeSensitivity::valueOf),
+                mapNullable(knowledgeRecord.getKnowledgesensitivity(), KnowledgeSensitivity::valueOf),
                 mapNullable(knowledgeRecord.getConfidence(), BigDecimal::doubleValue),
                 knowledgeRecord.getTtlDays(),
                 mapNullable(knowledgeRecord.getRationale(), KnowledgeRationale::of),

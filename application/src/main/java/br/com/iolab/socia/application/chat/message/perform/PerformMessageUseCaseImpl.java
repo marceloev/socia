@@ -52,16 +52,11 @@ public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
                 .build()
         );
 
-        var message = this.messageStrategy
-                .withChat(chat)
-                .withAssistant(assistant)
-                .withHistory(history)
-                .withResources(resources)
-                .withKnowledge(knowledge);
-
-        this.create(this.messageGateway, message);
-
         var incrementedChat = chat.incrementMessageCount().successOrThrow();
         this.update(this.chatGateway, incrementedChat);
+
+        this.create(this.messageGateway, performed.getMessage());
+        this.create(this.messageResourceGateway, performed.getResources());
+        this.create(this.knowledgeGateway, performed.getKnowledges());
     }
 }

@@ -18,8 +18,7 @@ CREATE TABLE knowledge (
 
 CREATE INDEX idx_knowledge_assistant ON knowledge(assistant_id);
 
-CREATE UNIQUE INDEX idx_knowledge_assistant_key_unique ON knowledge(assistant_id, key) 
-WHERE expires_at IS NULL;
+CREATE UNIQUE INDEX idx_knowledge_assistant_key_unique ON knowledge(assistant_id, key);
 
 CREATE INDEX idx_knowledge_expired ON knowledge(expires_at) 
 WHERE expires_at IS NOT NULL;

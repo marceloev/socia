@@ -65,6 +65,7 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
                 .execute();
     }
 
+    @Override
     public void upsert (@NonNull final Knowledge knowledge) {
         final var record = this.mapper.fromModel(knowledge);
 
@@ -80,7 +81,6 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
                 .set(KNOWLEDGE.TTL_DAYS, record.getTtlDays())
                 .set(KNOWLEDGE.RATIONALE, record.getRationale())
                 .set(KNOWLEDGE.EXPIRES_AT, record.getExpiresAt())
-                .where(KNOWLEDGE.EXPIRES_AT.isNull())
                 .execute();
     }
 }

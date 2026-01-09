@@ -15,5 +15,7 @@ public interface KnowledgeGateway extends ModelGateway<Knowledge, KnowledgeID> {
     @NonNull
     Optional<Knowledge> findByKey (@NonNull AssistantID assistantID, @NonNull KnowledgeKey key);
 
+    void upsert(@NonNull Knowledge knowledge);
+
     void deleteExpired ();
 }

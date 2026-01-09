@@ -57,6 +57,6 @@ public class PerformMessageUseCaseImpl extends PerformMessageUseCase {
 
         this.create(this.messageGateway, performed.getMessage());
         this.create(this.messageResourceGateway, performed.getResources());
-        this.create(this.knowledgeGateway, performed.getKnowledges());
+        this.change(this.knowledgeGateway::upsert, performed.getKnowledges());
     }
 }

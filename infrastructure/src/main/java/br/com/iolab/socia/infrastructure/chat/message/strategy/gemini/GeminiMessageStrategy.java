@@ -231,6 +231,39 @@ public class GeminiMessageStrategy implements MessageStrategy {
                 .build()
         );
 
+        if (!input.getKnowledge().isEmpty()) {
+            parts.add(Part.newBuilder()
+                    .setText(buildKnowledgeContext(input.getKnowledge()))
+                    .build()
+            );
+        }
+
         return parts;
+    }
+
+    private String buildKnowledgeContext (@NonNull final List<Knowledge> knowledgeList) {
+        var context = new StringBuilder();
+        context.append("\n\n## KNOWLEDGE BASE\n\n");
+        context.append("You have access to the following learned knowledge about this organization/user:\n\n");
+
+        knowledgeList.forEach(knowledge -> {
+            context.append("### ").append(knowledge.getKey().value()).append("\n");
+            context.append("**Value:** ").append(knowledge.getValue().value()).append("\n");
+            context.append("**Confidence:** ").append(String.format("%.2f", knowledge.getConfidence())).append("\n");
+            context.append("**Sensitivity:** ").append(knowledge.getKnowledgeSensitivity().name()).append("\n");
+            
+            if (knowledge.getTtlDays() != null) {
+                context.append("**TTL:** ").append(knowledge.getTtlDays()).append(" days\n");
+            }
+            
+            context.append("**Rationale:** ").append(knowledge.getRationale().value()).append("\n");
+            context.append("\n");
+        });
+
+        context.append("Use this knowledge to provide more contextual and personalized responses. ");
+        context.append("If you learn new information that contradicts or updates existing knowledge, ");
+        context.append("use the knowledge operations to update it.\n");
+
+        return context.toString();
     }
 }

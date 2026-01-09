@@ -64,4 +64,23 @@ public class KnowledgeGatewayImpl extends BasicModelGateway<Knowledge, Knowledge
                 .and(KNOWLEDGE.EXPIRES_AT.lessOrEqual(Instant.now()))
                 .execute();
     }
+
+    public void upsert (@NonNull final Knowledge knowledge) {
+        final var record = this.mapper.fromModel(knowledge);
+
+        this.writeOnlyDSLContext
+                .insertInto(KNOWLEDGE)
+                .set(record)
+                .onConflict(KNOWLEDGE.ASSISTANT_ID, KNOWLEDGE.KEY)
+                .doUpdate()
+                .set(KNOWLEDGE.UPDATED_AT, record.getUpdatedAt())
+                .set(KNOWLEDGE.VALUE, record.getValue())
+                .set(KNOWLEDGE.KNOWLEDGESENSITIVITY, record.getKnowledgesensitivity())
+                .set(KNOWLEDGE.CONFIDENCE, record.getConfidence())
+                .set(KNOWLEDGE.TTL_DAYS, record.getTtlDays())
+                .set(KNOWLEDGE.RATIONALE, record.getRationale())
+                .set(KNOWLEDGE.EXPIRES_AT, record.getExpiresAt())
+                .where(KNOWLEDGE.EXPIRES_AT.isNull())
+                .execute();
+    }
 }
